@@ -5,6 +5,10 @@ VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CountingLibrary", "CountingLibrary\CountingLibrary.csproj", "{0F610CEA-DB97-4D58-B6F5-FD6BC8AA77C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CountingGUI", "CountingGUI\CountingGUI.csproj", "{E22D4575-BC33-4592-8C16-88899CF8870C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevConsole", "DevConsole\DevConsole.csproj", "{E1CA025C-6C32-41E9-B336-D1C6B3B26A77}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{0F610CEA-DB97-4D58-B6F5-FD6BC8AA77C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F610CEA-DB97-4D58-B6F5-FD6BC8AA77C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F610CEA-DB97-4D58-B6F5-FD6BC8AA77C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E22D4575-BC33-4592-8C16-88899CF8870C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E22D4575-BC33-4592-8C16-88899CF8870C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E22D4575-BC33-4592-8C16-88899CF8870C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E22D4575-BC33-4592-8C16-88899CF8870C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1CA025C-6C32-41E9-B336-D1C6B3B26A77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1CA025C-6C32-41E9-B336-D1C6B3B26A77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1CA025C-6C32-41E9-B336-D1C6B3B26A77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1CA025C-6C32-41E9-B336-D1C6B3B26A77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
