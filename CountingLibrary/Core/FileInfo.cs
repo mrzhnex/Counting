@@ -1,14 +1,32 @@
-﻿namespace CountingLibrary.Core
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace CountingLibrary.Core
 {
-    public class FileInfo
+    public class FileInfo : INotifyPropertyChanged
     {
         public string FullName { get; set; }
         public List<SymbolInfo> SymbolInfos { get; set; } = new();
-        public int SymbolsCount { get; set; } = 0;
+        private int symbolsCount;
+        public int SymbolsCount
+        {
+            get { return symbolsCount; }
+            set
+            {
+                symbolsCount = value;
+                OnPropertyChanged();
+            }
+        }
 
         internal FileInfo(string fullName)
         {
             FullName = fullName;
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
 
         internal void AddSymbol(char symbol)

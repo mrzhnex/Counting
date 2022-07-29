@@ -1,12 +1,29 @@
-﻿namespace CountingLibrary.Core
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using CountingLibrary.Main;
+
+namespace CountingLibrary.Core
 {
-    public class Workspace
+    public class Workspace : INotifyPropertyChanged
     {
         private DirectoryInfo DirectoryInfo { get; set; }
         public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; set; } = new();
 
-        internal List<FileInfo> Files { get; set; } = new();
+        public List<FileInfo> Files { get; private set; } = new();
+
+        public List<SymbolInfo> SymbolInfos { get; set; } = new();
+
+        private int symbolsCount;
+        public int SymbolsCount
+        {
+            get { return symbolsCount; }
+            set
+            {
+                symbolsCount = value;
+                OnPropertyChanged();
+            }
+        }
 
         public string DirectoryPath
         {
@@ -16,8 +33,25 @@
         public Workspace(DirectoryInfo directoryInfo)
         {
             DirectoryInfo = directoryInfo;
+            for (int i = 0; i < Info.Default.Symbols.Length; i++)
+            {
+                SymbolInfos.Add(new SymbolInfo(Info.Default.Symbols[i]));
+            }
+            for (int i = 0; i < Info.Default.Numbers.Length; i++)
+            {
+                SymbolInfos.Add(new SymbolInfo(Info.Default.Numbers[i]));
+            }
+            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+            {
+                SymbolInfos.Add(new SymbolInfo(Info.Default.Alphabet.Letters[i]));
+            }
         }
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public void OnPropertyChanged([CallerMemberName] string prop = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        }
         public bool RemoveFileExtension(string extension)
         {
             return Settings.FileExtensions.Remove(extension);
@@ -51,8 +85,7 @@
         }
         public void Scan()
         {
-            if (!FileInfos.Any())
-                FastScan();
+            PrepareScan();
             foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
             {
                 for (int i = 0; i < keyValuePair.Value.Count; i++)
@@ -62,20 +95,29 @@
                         //add char c
                         //добавить проверку на соответствие символа с заданными параметрами символов
                         //например: не добавлять латинские буквы, если выбран русский алфавит
-                        if (Files.Where(x => x.FullName == keyValuePair.Key).Any())
-                            Files.Where(x => x.FullName == keyValuePair.Key).First().AddSymbol(c);
-                        else
-                        {
-                            Files.Add(new FileInfo(keyValuePair.Key));
-                            Files.Where(x => x.FullName == keyValuePair.Key).First().AddSymbol(c);
-                        }
+                        Files.Where(x => x.FullName == keyValuePair.Key).First().AddSymbol(c);;
+                        SymbolsCount++;
+                        if (SymbolInfos.Where(x => x.Symbol == c).Any())
+                            SymbolInfos.Where(x => x.Symbol == c).First().AddCount();
                     }
                 }
             }
         }
-        public List<FileInfo> GetFileInfos()
+        public void PrepareScan()
         {
-            return Files;
+            if (!FileInfos.Any())
+                FastScan();
+            foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
+            {
+                for (int i = 0; i < keyValuePair.Value.Count; i++)
+                {
+                    foreach (char c in keyValuePair.Value[i])
+                    {
+                        if (!Files.Where(x => x.FullName == keyValuePair.Key).Any())
+                            Files.Add(new FileInfo(keyValuePair.Key));
+                    }
+                }
+            }
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DevConsole
             }
             manager.Workspace.FastScan();
             manager.Workspace.Scan();
-            List<CountingLibrary.Core.FileInfo> fileInfos = manager.Workspace.GetFileInfos();
+            List<CountingLibrary.Core.FileInfo> fileInfos = manager.Workspace.Files;
             foreach (CountingLibrary.Core.FileInfo fileInfo in fileInfos)
             {
                 Console.WriteLine($"{fileInfo.FullName}:{fileInfo.SymbolsCount}");
