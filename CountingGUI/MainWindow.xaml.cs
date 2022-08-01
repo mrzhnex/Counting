@@ -32,7 +32,6 @@ namespace CountingGUI
             manager.AddWorkspace("D:/Workspace/Heap/Counting");
             manager.Workspace.PrepareScan();
 
-            SymbolsCountTextTextBlock.Text = $"Файл {manager.Workspace.Files.First().FullName}";
 
             Binding binding = new()
             {
@@ -40,84 +39,54 @@ namespace CountingGUI
                 Path = new PropertyPath(nameof(Workspace.SymbolsCount)),
                 UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
             };
-            SymbolsCountTextBlock.SetBinding(TextBlock.TextProperty, binding);
-
+            //SymbolsCountTextBlock.SetBinding(TextBlock.TextProperty, binding);
+            SystemInfoControl.DataContext = manager.Workspace;
             int gridCount = 0;
             for (int i = 0; i < Info.Default.Symbols.Length; i++)
             {
-                CreateObject(Info.Default.Symbols[i], $"symbol{i}", gridCount);
+                CreateObject(Info.Default.Symbols[i], gridCount);
                 gridCount++;
             }
             for (int i = 0; i < Info.Default.Numbers.Length; i++)
             {
-                CreateObject(Info.Default.Numbers[i], $"number{i}", gridCount);
+                CreateObject(Info.Default.Numbers[i], gridCount);
                 gridCount++;
             }
             for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
             {
-                CreateObject(Info.Default.Alphabet.Letters[i], $"letter{i}", gridCount);
+                CreateObject(Info.Default.Alphabet.Letters[i], gridCount);
                 gridCount++;
             }
         }
 
-        private void CreateObject(char info, string subInfo, int index)
+
+        private void CreateObject(char info, int index)
         {
-            Border border = new()
-            {
-                BorderThickness = new Thickness(2),
-                BorderBrush = Brushes.Black
-            };
-            TextBlock textBlock = new()
-            {
-                TextAlignment = TextAlignment.Center,
-                FontSize = 14,
-                Text = $"{info}:"
-            };
-
-            TextBlock textBlock1 = new()
-            {
-                TextAlignment = TextAlignment.Center,
-                FontSize = 14,
-                Name = subInfo
-            };
-
-
-            Binding binding = new()
-            {
-                Source = manager.Workspace.SymbolInfos.Where(x => x.Symbol == info).First(),
-                Path = new PropertyPath(nameof(SymbolInfo.Count)),
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-            };
-            textBlock1.SetBinding(TextBlock.TextProperty, binding);
-
-
-            StackPanel stackPanel = new()
-            {
-                Orientation = Orientation.Horizontal
-            };
-            stackPanel.Children.Add(textBlock);
-            stackPanel.Children.Add(textBlock1);
-
-            border.Child = stackPanel;
+            SymbolInfoControl symbolInfoControl = new(info, manager);
 
             if (index % 2 == 0)
             {
-                Grid.SetRow(border, DynamicGrid.RowDefinitions.Count);
-                Grid.SetColumn(border, 0);
+                Grid.SetRow(symbolInfoControl, DynamicGridOne.RowDefinitions.Count);
+                DynamicGridOne.RowDefinitions.Add(new RowDefinition());
+                DynamicGridOne.Children.Add(symbolInfoControl);
             }
             else
             {
-                Grid.SetRow(border, DynamicGrid.RowDefinitions.Count);
-                Grid.SetColumn(border, 1);
-                DynamicGrid.RowDefinitions.Add(new RowDefinition());
+                Grid.SetRow(symbolInfoControl, DynamicGridTwo.RowDefinitions.Count);
+                DynamicGridTwo.RowDefinitions.Add(new RowDefinition());
+                DynamicGridTwo.Children.Add(symbolInfoControl);
             }
-            DynamicGrid.Children.Add(border);
         }
 
         private void test_Click(object sender, RoutedEventArgs e)
         {
-            Thread thread = new Thread(manager.Workspace.Scan);
+            Thread thread = new(manager.Workspace.Scan);
             thread.Start();
+        }
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

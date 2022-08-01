@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using CountingLibrary.Main;
 
@@ -9,10 +10,19 @@ namespace CountingLibrary.Core
         private DirectoryInfo DirectoryInfo { get; set; }
         public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; set; } = new();
-
-        public List<FileInfo> Files { get; private set; } = new();
-
         public List<SymbolInfo> SymbolInfos { get; set; } = new();
+        private Stopwatch Stopwatch { get; set; } = new();
+
+        private string time = "00:00:00:00";
+        public string Time
+        {
+            get { return time; }
+            set
+            {
+                time = value;
+                OnPropertyChanged();
+            }
+        }
 
         private int symbolsCount;
         public int SymbolsCount
@@ -76,7 +86,6 @@ namespace CountingLibrary.Core
         }
         public void FastScan()
         {
-            Files.Clear();
             FileInfos.Clear();
             foreach (string fullFileName in GetFiles())
             {
@@ -85,6 +94,8 @@ namespace CountingLibrary.Core
         }
         public void Scan()
         {
+            Stopwatch.Reset();
+            Stopwatch.Start();
             PrepareScan();
             foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
             {
@@ -95,29 +106,19 @@ namespace CountingLibrary.Core
                         //add char c
                         //добавить проверку на соответствие символа с заданными параметрами символов
                         //например: не добавлять латинские буквы, если выбран русский алфавит
-                        Files.Where(x => x.FullName == keyValuePair.Key).First().AddSymbol(c);;
                         SymbolsCount++;
                         if (SymbolInfos.Where(x => x.Symbol == c).Any())
                             SymbolInfos.Where(x => x.Symbol == c).First().AddCount();
+                        Time = Stopwatch.Elapsed.ToString();
                     }
                 }
             }
+            Stopwatch.Stop();
         }
         public void PrepareScan()
         {
             if (!FileInfos.Any())
                 FastScan();
-            foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
-            {
-                for (int i = 0; i < keyValuePair.Value.Count; i++)
-                {
-                    foreach (char c in keyValuePair.Value[i])
-                    {
-                        if (!Files.Where(x => x.FullName == keyValuePair.Key).Any())
-                            Files.Add(new FileInfo(keyValuePair.Key));
-                    }
-                }
-            }
         }
     }
 }

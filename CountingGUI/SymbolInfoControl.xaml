@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="CountingGUI.SymbolInfoControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:CountingGUI"
+             mc:Ignorable="d" 
+             d:DesignHeight="20" d:DesignWidth="100">
+    <Border BorderBrush="Black" BorderThickness="0,1,0,0">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.2*"></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="0" Background="LightGray">
+                <TextBlock x:Name="Symbol" Text="{Binding Path=Symbol}" TextAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="1">
+                <TextBlock x:Name="Count" Text="{Binding Path=Count}" TextAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="2">
+                <TextBlock x:Name="Percent" Text="{Binding Path=Percent}" TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

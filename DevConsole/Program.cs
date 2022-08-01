@@ -19,17 +19,10 @@ namespace DevConsole
             }
             manager.Workspace.FastScan();
             manager.Workspace.Scan();
-            List<CountingLibrary.Core.FileInfo> fileInfos = manager.Workspace.Files;
-            foreach (CountingLibrary.Core.FileInfo fileInfo in fileInfos)
+            List<SymbolInfo> symbolInfos = manager.Workspace.SymbolInfos;
+            foreach (SymbolInfo symbolInfo in symbolInfos)
             {
-                Console.WriteLine($"{fileInfo.FullName}:{fileInfo.SymbolsCount}");
-                float percent = 0.0f;
-                foreach (SymbolInfo symbolInfo in fileInfo.SymbolInfos)
-                {
-                    Console.WriteLine($"{symbolInfo}:{symbolInfo.Count}; percent:{fileInfo.GetPercent(symbolInfo.Symbol)}");
-                    percent += fileInfo.GetPercent(symbolInfo.Symbol);
-                }
-                Console.WriteLine($"Total percent:{percent}");
+                Console.WriteLine($"{symbolInfo}:{symbolInfo.Count}; percent:{symbolInfo.Percent}");
             }
             Console.WriteLine("END");
             Console.ReadKey();
