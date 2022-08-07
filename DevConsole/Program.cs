@@ -1,5 +1,4 @@
 ﻿using CountingLibrary.Core;
-using CountingLibrary.Main;
 
 namespace DevConsole
 {
@@ -9,17 +8,14 @@ namespace DevConsole
         {
             Console.WriteLine("START");
 
-
-            Manager manager = new();
-            manager.AddWorkspace("D:/Workspace/Heap/Counting");
-            string[] files = manager.Workspace.GetFiles();
+            Workspace workspace = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+            string[] files = workspace.GetFiles();
             foreach (string file in files)
             {
                 Console.WriteLine($"filename '{file}'");
             }
-            manager.Workspace.FastScan();
-            manager.Workspace.Scan();
-            List<SymbolInfo> symbolInfos = manager.Workspace.SymbolInfos;
+            workspace.Start();
+            List<SymbolInfo> symbolInfos = workspace.SymbolInfos;
             foreach (SymbolInfo symbolInfo in symbolInfos)
             {
                 Console.WriteLine($"{symbolInfo}:{symbolInfo.Count}; percent:{symbolInfo.Percent}");

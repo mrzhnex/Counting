@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using CountingLibrary.Main;
 
 namespace CountingLibrary.Core
 {
@@ -11,7 +10,7 @@ namespace CountingLibrary.Core
         public int Count
         {
             get { return count; }
-            set
+            private set
             {
                 count = value;
                 OnPropertyChanged();
@@ -22,7 +21,7 @@ namespace CountingLibrary.Core
         public float Percent
         {
             get { return percent; }
-            set
+            private set
             {
                 percent = value;
                 OnPropertyChanged();
@@ -39,13 +38,22 @@ namespace CountingLibrary.Core
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
-        private void UpdatePercent()
+        public void UpdatePercent()
         {
-            Percent = Manager.ManagerInstance.Workspace.SymbolInfos.Any(x => x.Symbol == Symbol) ? Manager.ManagerInstance.Workspace.SymbolInfos.First(x => x.Symbol == Symbol).Count / (float)Manager.ManagerInstance.Workspace.SymbolsCount * 100 : 0.0f;
+            if (Count == 0)
+            {
+                Percent = 0;
+                return;
+            }
+            Percent = Workspace.WorkspaceInstance.SymbolInfos.Any(x => x.Symbol == Symbol) ? Workspace.WorkspaceInstance.SymbolInfos.First(x => x.Symbol == Symbol).Count / (float)Workspace.WorkspaceInstance.SymbolsCount * 100 : 0.0f;
         }
         internal void AddCount()
         {
             Count++;
+        }
+        internal void ResetCount()
+        {
+            Count = 0;
         }
         public override string ToString()
         {

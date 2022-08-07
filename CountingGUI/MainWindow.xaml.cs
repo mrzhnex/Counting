@@ -1,46 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using CountingLibrary.Core;
 using CountingLibrary.Main;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Collections.Generic;
+using System;
 
 namespace CountingGUI
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        Manager manager = new();
+        private Workspace Workspace { get; set; }
+        private List<SymbolInfoControl> SymbolInfoControls { get; set; } = new();
+
         public MainWindow()
         {
             InitializeComponent();
-            
-            manager.AddWorkspace("D:/Workspace/Heap/Counting");
-            manager.Workspace.PrepareScan();
+            Workspace = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+            SystemInfoControl.DataContext = Workspace;
+            GenerateGrids();
+        }
 
-
-            Binding binding = new()
-            {
-                Source = manager.Workspace,
-                Path = new PropertyPath(nameof(Workspace.SymbolsCount)),
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
-            };
-            //SymbolsCountTextBlock.SetBinding(TextBlock.TextProperty, binding);
-            SystemInfoControl.DataContext = manager.Workspace;
+        #region Non GUI
+        private void GenerateGrids()
+        {
             int gridCount = 0;
             for (int i = 0; i < Info.Default.Symbols.Length; i++)
             {
@@ -58,11 +42,23 @@ namespace CountingGUI
                 gridCount++;
             }
         }
+        private void ClearGrids()
+        {
+            for (int i = 0; i < SymbolInfoControls.Count; i++)
+            {
+                if (DynamicGridOne.Children.Contains(SymbolInfoControls[i]))
+                    DynamicGridOne.Children.Remove(SymbolInfoControls[i]);
+                if (DynamicGridTwo.Children.Contains(SymbolInfoControls[i]))
+                    DynamicGridTwo.Children.Remove(SymbolInfoControls[i]);
+            }
+            DynamicGridOne.RowDefinitions.RemoveRange(1, DynamicGridOne.RowDefinitions.Count - 1);
+            DynamicGridTwo.RowDefinitions.RemoveRange(1, DynamicGridTwo.RowDefinitions.Count - 1);
 
-
+            SymbolInfoControls.Clear();
+        }
         private void CreateObject(char info, int index)
         {
-            SymbolInfoControl symbolInfoControl = new(info, manager);
+            SymbolInfoControl symbolInfoControl = new(info, Workspace);
 
             if (index % 2 == 0)
             {
@@ -76,17 +72,86 @@ namespace CountingGUI
                 DynamicGridTwo.RowDefinitions.Add(new RowDefinition());
                 DynamicGridTwo.Children.Add(symbolInfoControl);
             }
+            SymbolInfoControls.Add(symbolInfoControl);
         }
-
-        private void test_Click(object sender, RoutedEventArgs e)
+        private void DisablePauseButton(Thread thread)
         {
-            Thread thread = new(manager.Workspace.Scan);
-            thread.Start();
+            Dispatcher.Invoke(() => Pause.IsEnabled = true);
+            thread.Join();
+            Dispatcher.Invoke(() => Pause.IsEnabled = false);
+            Dispatcher.Invoke(() => Pause.Content = "Пауза");
+            Dispatcher.Invoke(() => Start.Content = "Старт");
         }
+        #endregion
 
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void Pause_Click(object sender, RoutedEventArgs e)
+        {
+            if (Workspace.ManualResetEvent.WaitOne(0))
+            {
+                Workspace.Pause();
+                Pause.Content = "Продолжить";
+            }
+            else
+            {
+                Pause.Content = "Пауза";
+                Workspace.Continue();
+            }
+        }
+
+        private void Start_Click(object sender, RoutedEventArgs e)
+        {
+            if (Workspace.IsRunning)
+            {
+                Workspace.Stop();
+                Start.Content = "Старт";
+                Pause.Content = "Пауза";
+            }
+            else
+            {
+                Thread thread = new(Workspace.Start);
+                Thread thread1 = new(() => DisablePauseButton(thread));
+                Start.Content = "Стоп";
+                thread.Start();
+                thread1.Start();
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (Workspace.IsRunning)
+                Workspace.Stop();
+        }
+
+
+        private void SelectWorkspace_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new CommonOpenFileDialog
+            {
+                Title = "My Title",
+                IsFolderPicker = true,
+
+                AddToMostRecentlyUsedList = false,
+                AllowNonFileSystemItems = false,
+                EnsureFileExists = true,
+                EnsurePathExists = true,
+                EnsureReadOnly = false,
+                EnsureValidNames = true,
+                Multiselect = false,
+                ShowPlacesList = true
+            };
+            dlg.IsFolderPicker = true;
+            if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                Workspace = new(dlg.FileName);
+                SystemInfoControl.DataContext = Workspace;
+                ClearGrids();
+                GenerateGrids();
+            }
         }
     }
 }
