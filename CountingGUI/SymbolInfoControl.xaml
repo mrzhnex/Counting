@@ -14,7 +14,7 @@
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="0" Background="LightGray">
-                <TextBlock x:Name="Symbol" Text="{Binding Path=Symbol}" TextAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock x:Name="Symbol" Text="{Binding Path=SymbolView}" TextAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="1">
                 <TextBlock x:Name="Count" Text="{Binding Path=Count}" TextAlignment="Center" VerticalAlignment="Center"/>

@@ -15,4 +15,13 @@
     <ProjectReference Include="..\CountingLibrary\CountingLibrary.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Action">
+      <HintPath>..\..\TabulaComplex\Logging\bin\Debug\net5.0\Action.dll</HintPath>
+    </Reference>
+    <Reference Include="Logging">
+      <HintPath>..\..\TabulaComplex\Logging\bin\Debug\net5.0\Logging.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

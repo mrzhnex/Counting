@@ -9,7 +9,7 @@ namespace CountingGUI
         public SymbolInfoControl(char info, Workspace workspace)
         {
             InitializeComponent();
-            DataContext = workspace.SymbolInfos.Where(x => x.Symbol == info).First();
+            DataContext = workspace.SymbolInfos.First(x => x.Symbol == info);
         }
     }
 }

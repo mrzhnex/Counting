@@ -5,7 +5,9 @@ namespace CountingLibrary.Core
 {
     public class SymbolInfo : INotifyPropertyChanged
     {
-        public char Symbol { get; set; }
+        public char Symbol { get; private set; }
+        public string SymbolView { get; private set; }
+
         private int count;
         public int Count
         {
@@ -31,6 +33,11 @@ namespace CountingLibrary.Core
         internal SymbolInfo(char symbol)
         {
             Symbol = symbol;
+            SymbolView = symbol.ToString();
+            if (symbol == '\n')
+                SymbolView = "строка";
+            else if (symbol == ' ')
+                SymbolView = "пробел";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

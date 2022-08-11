@@ -19,7 +19,12 @@
                     <Menu Grid.Row="0" VerticalAlignment="Top">
                         <MenuItem x:Name="SelectWorkspace" Header="Массив данных" Click="SelectWorkspace_Click"></MenuItem>
                         <MenuItem Header="Обработка"></MenuItem>
-                        <MenuItem Header="Вид"></MenuItem>
+                        <MenuItem Header="Вид">
+                            <MenuItem Header="Сортировка">
+                                <MenuItem x:Name="AlphabetMenuItem" Header="Алфавит" IsChecked="True" Click="AlphabetMenuItem_Click" StaysOpenOnClick="True"></MenuItem>
+                                <MenuItem x:Name="CountMenuItem" Header="Количество" Click="CountMenuItem_Click" StaysOpenOnClick="True"></MenuItem>
+                            </MenuItem>
+                        </MenuItem>
                         <MenuItem x:Name="Settings" Header="Настройки" Click="Settings_Click"></MenuItem>
                         <MenuItem Header="Справка"></MenuItem>
                     </Menu>

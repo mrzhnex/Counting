@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using CountingLibrary.Events;
+using CountingLibrary.Handlers;
 using CountingLibrary.Main;
 
 namespace CountingLibrary.Core
@@ -10,7 +12,8 @@ namespace CountingLibrary.Core
         private DirectoryInfo DirectoryInfo { get; set; }
         public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; private set; } = new();
-        public List<SymbolInfo> SymbolInfos { get; set; } = new();
+        public List<SymbolInfo> SymbolInfos { get; private set; } = new();
+        public List<char> Symbols { get; private set; } = new();
         private Stopwatch Stopwatch { get; set; } = new();
 
         private string time = "00:00:00:00";
@@ -24,11 +27,11 @@ namespace CountingLibrary.Core
             }
         }
 
-        private int symbolsCount;
-        public int SymbolsCount
+        private ulong symbolsCount;
+        public ulong SymbolsCount
         {
             get { return symbolsCount; }
-            set
+            private set
             {
                 symbolsCount = value;
                 OnPropertyChanged();
@@ -41,19 +44,23 @@ namespace CountingLibrary.Core
         public ManualResetEvent ManualResetEvent { get; private set; } = new(false);
         public bool IsRunning { get; private set; } = false;
         public static Workspace WorkspaceInstance { get; set; }
+        public Sort Sort { get; private set; } = Sort.Alphabet;
 
         public Workspace(DirectoryInfo directoryInfo)
         {
             DirectoryInfo = directoryInfo;
+            PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
         }
         public Workspace(string path)
         {
             DirectoryInfo = new(path);
+            PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
         }
+
         #region Settings
         public bool RemoveFileExtension(string extension)
         {
@@ -65,6 +72,21 @@ namespace CountingLibrary.Core
                 return false;
             Settings.FileExtensions.Add(extension);
             return true;
+        }
+        public void SortBy(Sort sort)
+        {
+            Sort = sort;
+            switch (Sort)
+            {
+                case Sort.Alphabet:
+                    SymbolInfos = SymbolInfos.OrderBy(x => x.Symbol).ToList();
+                    break;
+                case Sort.Count:
+                    SymbolInfos = SymbolInfos.OrderBy(x => x.Count).Reverse().ToList();
+                    break;
+                default:
+                    break;
+            }
         }
         #endregion
 
@@ -86,6 +108,7 @@ namespace CountingLibrary.Core
         }
         private void Scan()
         {
+            double seconds = 0;
             foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
             {
                 if (!IsRunning)
@@ -96,25 +119,37 @@ namespace CountingLibrary.Core
                         break;
                     foreach (char c in keyValuePair.Value[i])
                     {
-                        //add char c
-                        //добавить проверку на соответствие символа с заданными параметрами символов
-                        //например: не добавлять латинские буквы, если выбран русский алфавит
-
                         ManualResetEvent.WaitOne();
 
                         if (!IsRunning)
                             break;
-                        SymbolsCount++;
-                        if (SymbolInfos.Where(x => x.Symbol == c).Any())
-                            SymbolInfos.Where(x => x.Symbol == c).First().AddCount();
+                        if (SymbolInfos.Any(x => x.Symbol == char.ToLower(c)))
+                        {
+                            SymbolsCount++;
+                            SymbolInfos.First(x => x.Symbol == char.ToLower(c)).AddCount();
+                        }
+
                         foreach (SymbolInfo symbolInfo in SymbolInfos)
                         {
                             symbolInfo.UpdatePercent();
                         }
                         Time = Stopwatch.Elapsed.ToString();
+                        if (Stopwatch.Elapsed.TotalSeconds > seconds)
+                        {
+                            seconds = Stopwatch.Elapsed.TotalSeconds + 0.5d;
+                            SortBy(Sort);
+                            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
+                        }
+                    }
+                    if (i != keyValuePair.Value.Count - 1)
+                    {
+                        SymbolsCount++;
+                        SymbolInfos.First(x => x.Symbol == char.ToLower('\n')).AddCount();
                     }
                 }
             }
+            SortBy(Sort);
+            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
             ManualResetEvent.Reset();
             IsRunning = false;
             Stopwatch.Stop();
@@ -173,15 +208,15 @@ namespace CountingLibrary.Core
         {
             for (int i = 0; i < Info.Default.Symbols.Length; i++)
             {
-                SymbolInfos.Add(new SymbolInfo(Info.Default.Symbols[i]));
+                SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Symbols[i])));
             }
             for (int i = 0; i < Info.Default.Numbers.Length; i++)
             {
-                SymbolInfos.Add(new SymbolInfo(Info.Default.Numbers[i]));
+                SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Numbers[i])));
             }
             for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
             {
-                SymbolInfos.Add(new SymbolInfo(Info.Default.Alphabet.Letters[i]));
+                SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Alphabet.Letters[i])));
             }
         }
         public string[] GetFiles()
@@ -194,6 +229,22 @@ namespace CountingLibrary.Core
             {
                 return Array.Empty<string>();
             }
+        }
+        private void PrepareSymbols()
+        {
+            for (int i = 0; i < Info.Default.Symbols.Length; i++)
+            {
+                Symbols.Add(Info.Default.Symbols[i]);
+            }
+            for (int i = 0; i < Info.Default.Numbers.Length; i++)
+            {
+                Symbols.Add(Info.Default.Numbers[i]);
+            }
+            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+            {
+                Symbols.Add(Info.Default.Alphabet.Letters[i]);
+            }
+            Symbols = Symbols.OrderBy(x => x).ToList();
         }
         #endregion
     }
