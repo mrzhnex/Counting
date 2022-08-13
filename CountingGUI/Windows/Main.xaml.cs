@@ -9,15 +9,15 @@ using CountingLibrary.Handlers;
 using CountingLibrary.Events;
 using CountingLibrary.Main;
 
-namespace CountingGUI
+namespace CountingGUI.Windows
 {
-    public partial class MainWindow : Window, IEventHandlerSort
+    public partial class Main : Window, IEventHandlerSort
     {
         private Workspace Workspace { get; set; } = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-        private List<SymbolInfoControl> SymbolInfoControls { get; set; } = new();
+        private List<Controls.SymbolInfo> SymbolInfos { get; set; } = new();
         private bool IsWindowClosing { get; set; }
 
-        public MainWindow()
+        public Main()
         {
             InitializeComponent();
             SystemInfoControl.DataContext = Workspace;
@@ -33,23 +33,23 @@ namespace CountingGUI
                 CreateObject(Workspace.Symbols[i], i, (int)Math.Ceiling(Workspace.Symbols.Count / 2.0));
             }
         }
-        private void CreateObject(char symbolInfo, int index, int rowsCount)
+        private void CreateObject(char symbol, int index, int rowsCount)
         {
-            SymbolInfoControl symbolInfoControl = new(char.ToLower(symbolInfo), Workspace);
+            Controls.SymbolInfo symbolInfo = new(char.ToLower(symbol), Workspace);
             
             if (index < rowsCount)
             {
-                Grid.SetRow(symbolInfoControl, DynamicGridOne.RowDefinitions.Count);
+                Grid.SetRow(symbolInfo, DynamicGridOne.RowDefinitions.Count);
                 DynamicGridOne.RowDefinitions.Add(new RowDefinition());
-                DynamicGridOne.Children.Add(symbolInfoControl);
+                DynamicGridOne.Children.Add(symbolInfo);
             }
             else
             {
-                Grid.SetRow(symbolInfoControl, DynamicGridTwo.RowDefinitions.Count);
+                Grid.SetRow(symbolInfo, DynamicGridTwo.RowDefinitions.Count);
                 DynamicGridTwo.RowDefinitions.Add(new RowDefinition());
-                DynamicGridTwo.Children.Add(symbolInfoControl);
+                DynamicGridTwo.Children.Add(symbolInfo);
             }
-            SymbolInfoControls.Add(symbolInfoControl);
+            SymbolInfos.Add(symbolInfo);
         }
         private void DisablePauseButton(Thread thread)
         {
@@ -58,8 +58,8 @@ namespace CountingGUI
             if (!IsWindowClosing)
             {
                 Dispatcher.Invoke(() => Pause.IsEnabled = false);
-                Dispatcher.Invoke(() => Pause.Content = "Пауза");
-                Dispatcher.Invoke(() => Start.Content = "Старт");
+                Dispatcher.Invoke(() => Pause.Header = "Приостановить");
+                Dispatcher.Invoke(() => Start.Header = "Обработка");
             }
         }
         private void Sort()
@@ -80,28 +80,24 @@ namespace CountingGUI
         }
         private void ReBindingSymbolsDataContext()
         {
-            for (int i = 0; i < SymbolInfoControls.Count; i++)
+            for (int i = 0; i < SymbolInfos.Count; i++)
             {
-                Dispatcher.Invoke(() => SymbolInfoControls[i].DataContext = Workspace.SymbolInfos[i]);
+                Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.SymbolInfos[i]);
             }
         }
         #endregion
 
         #region Click
-        private void Settings_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
         private void Pause_Click(object sender, RoutedEventArgs e)
         {
             if (Workspace.ManualResetEvent.WaitOne(0))
             {
                 Workspace.Pause();
-                Pause.Content = "Продолжить";
+                Pause.Header = "Продолжить";
             }
             else
             {
-                Pause.Content = "Пауза";
+                Pause.Header = "Приостановить";
                 Workspace.Continue();
             }
         }
@@ -110,27 +106,34 @@ namespace CountingGUI
             if (Workspace.IsRunning)
             {
                 Workspace.Stop();
-                Start.Content = "Старт";
-                Pause.Content = "Пауза";
+                Start.Header = "Обработка";
+                Pause.Header = "Приостановить";
             }
             else
             {
                 Thread thread = new(Workspace.Start);
                 Thread thread1 = new(() => DisablePauseButton(thread));
-                Start.Content = "Стоп";
+                Start.Header = "Остановить";
                 thread.Start();
                 thread1.Start();
             }
+        }
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            new Settings() { Owner = this }.ShowDialog();
+        }
+        private void Help_Click(object sender, RoutedEventArgs e)
+        {
+            new Help() { Owner = this }.ShowDialog();
         }
         private void SelectWorkspace_Click(object sender, RoutedEventArgs e)
         {
             if (Workspace.IsRunning)
                 return;
-            var dlg = new CommonOpenFileDialog
+            CommonFileDialog commonFileDialog = new CommonOpenFileDialog
             {
-                Title = "My Title",
+                Title = "Массив данных",
                 IsFolderPicker = true,
-
                 AddToMostRecentlyUsedList = false,
                 AllowNonFileSystemItems = false,
                 EnsureFileExists = true,
@@ -140,11 +143,10 @@ namespace CountingGUI
                 Multiselect = false,
                 ShowPlacesList = true
             };
-            dlg.IsFolderPicker = true;
-            if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
+            if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 Sort oldSort = Workspace.Sort;
-                Workspace = new(dlg.FileName);
+                Workspace = new(commonFileDialog.FileName);
                 Workspace.SortBy(oldSort);
                 SystemInfoControl.DataContext = Workspace;
                 ReBindingSymbolsDataContext();

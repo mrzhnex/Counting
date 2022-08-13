@@ -1,9 +1,8 @@
-﻿<UserControl x:Class="CountingGUI.SystemInfoControl"
+﻿<UserControl x:Class="CountingGUI.Controls.SystemInfo"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:CountingGUI"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d" 
              d:DesignHeight="40" MinWidth="300">
     <Grid>

@@ -16,7 +16,7 @@ namespace CountingLibrary.Core
         public List<char> Symbols { get; private set; } = new();
         private Stopwatch Stopwatch { get; set; } = new();
 
-        private string time = "00:00:00:00";
+        private string time = Info.Default.InitialTime;
         public string Time
         {
             get { return time; }
@@ -43,7 +43,7 @@ namespace CountingLibrary.Core
         }
         public ManualResetEvent ManualResetEvent { get; private set; } = new(false);
         public bool IsRunning { get; private set; } = false;
-        public static Workspace WorkspaceInstance { get; set; }
+        public static Workspace WorkspaceInstance { get; set; } = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         public Sort Sort { get; private set; } = Sort.Alphabet;
 
         public Workspace(DirectoryInfo directoryInfo)
@@ -151,8 +151,13 @@ namespace CountingLibrary.Core
             SortBy(Sort);
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
             ManualResetEvent.Reset();
-            IsRunning = false;
             Stopwatch.Stop();
+            if (!IsRunning)
+            {
+                Time = Info.Default.InitialTime;
+                ResetOldData();
+            }
+            IsRunning = false;
         }
         public void PrepareScan()
         {
@@ -186,7 +191,6 @@ namespace CountingLibrary.Core
         {
             ManualResetEvent.Set();
             IsRunning = false;
-            ResetOldData();
         }
         #endregion
 
