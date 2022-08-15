@@ -20,11 +20,10 @@
                         <MenuItem x:Name="SelectWorkspace" Header="Массив данных" Click="SelectWorkspace_Click"/>
                         <MenuItem x:Name="Start" Header="Обработка" Click="Start_Click"/>
                         <MenuItem x:Name="Pause" Header="Приостановить" Click="Pause_Click" IsEnabled="False"/>
-                        <MenuItem Header="Вид">
-                            <MenuItem Header="Сортировка">
-                                <MenuItem x:Name="AlphabetMenuItem" Header="Алфавит" IsChecked="True" Click="AlphabetMenuItem_Click" StaysOpenOnClick="True"/>
-                                <MenuItem x:Name="CountMenuItem" Header="Количество" Click="CountMenuItem_Click" StaysOpenOnClick="True"/>
-                            </MenuItem>
+                        <MenuItem Header="Сортировка">
+                            <MenuItem x:Name="DefaultMenuItem" Header="По умолчанию" IsChecked="True" Click="DefaultMenuItem_Click" StaysOpenOnClick="True"/>
+                            <MenuItem x:Name="AlphabetMenuItem" Header="Алфавит" Click="AlphabetMenuItem_Click" StaysOpenOnClick="True"/>
+                            <MenuItem x:Name="CountMenuItem" Header="Количество" Click="CountMenuItem_Click" StaysOpenOnClick="True"/>
                         </MenuItem>
                         <MenuItem x:Name="Settings" Header="Настройки" Click="Settings_Click"/>
                         <MenuItem x:Name="Help" Header="Справка" Click="Help_Click"/>

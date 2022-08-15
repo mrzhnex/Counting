@@ -16,17 +16,26 @@ namespace CountingLibrary.Core
         public List<char> Symbols { get; private set; } = new();
         private Stopwatch Stopwatch { get; set; } = new();
 
-        private string time = Info.Default.InitialTime;
-        public string Time
+        private string timeSpent = Info.Default.InitialTime;
+        public string TimeSpent
         {
-            get { return time; }
-            set
+            get { return timeSpent; }
+            private set
             {
-                time = value;
+                timeSpent = value;
                 OnPropertyChanged();
             }
         }
-
+        private string timeLeft = Info.Default.InitialTime;
+        public string TimeLeft
+        {
+            get { return timeLeft; }
+            private set
+            {
+                timeLeft = value;
+                OnPropertyChanged();
+            }
+        }
         private ulong symbolsCount;
         public ulong SymbolsCount
         {
@@ -37,6 +46,17 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
+        private ulong wrongSymbolsCount;
+        public ulong WrongSymbolsCount
+        {
+            get { return wrongSymbolsCount; }
+            private set
+            {
+                wrongSymbolsCount = value;
+                OnPropertyChanged();
+            }
+        }
+
         public string DirectoryPath
         {
             get { return DirectoryInfo is null ? string.Empty : DirectoryInfo.FullName; }
@@ -44,7 +64,9 @@ namespace CountingLibrary.Core
         public ManualResetEvent ManualResetEvent { get; private set; } = new(false);
         public bool IsRunning { get; private set; } = false;
         public static Workspace WorkspaceInstance { get; set; } = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-        public Sort Sort { get; private set; } = Sort.Alphabet;
+        public Sort Sort { get; private set; } = Sort.Default;
+        private ulong TotalSymbolsCount { get; set; }
+        private bool TimeLeftIsOver { get; set; }
 
         public Workspace(DirectoryInfo directoryInfo)
         {
@@ -84,6 +106,9 @@ namespace CountingLibrary.Core
                 case Sort.Count:
                     SymbolInfos = SymbolInfos.OrderBy(x => x.Count).Reverse().ToList();
                     break;
+                case Sort.Default:
+                    SymbolInfos = SymbolInfos.OrderBy(x => Symbols.IndexOf(x.Symbol)).ToList();
+                    break;
                 default:
                     break;
             }
@@ -103,6 +128,13 @@ namespace CountingLibrary.Core
                 catch (IOException)
                 {
                     //log
+                }
+            }
+            foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
+            {
+                for (int i = 0; i < keyValuePair.Value.Count; i++)
+                {
+                    TotalSymbolsCount += (ulong)keyValuePair.Value[i].Length;
                 }
             }
         }
@@ -127,13 +159,19 @@ namespace CountingLibrary.Core
                         {
                             SymbolsCount++;
                             SymbolInfos.First(x => x.Symbol == char.ToLower(c)).AddCount();
+                            foreach (SymbolInfo symbolInfo in SymbolInfos)
+                            {
+                                symbolInfo.UpdatePercent();
+                            }
                         }
-
-                        foreach (SymbolInfo symbolInfo in SymbolInfos)
+                        else
                         {
-                            symbolInfo.UpdatePercent();
+                            WrongSymbolsCount++;
                         }
-                        Time = Stopwatch.Elapsed.ToString();
+                
+                        TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
+                        if (!TimeLeftIsOver)
+                            TimeLeft = CalculateTimeLeft();
                         if (Stopwatch.Elapsed.TotalSeconds > seconds)
                         {
                             seconds = Stopwatch.Elapsed.TotalSeconds + 0.5d;
@@ -154,7 +192,9 @@ namespace CountingLibrary.Core
             Stopwatch.Stop();
             if (!IsRunning)
             {
-                Time = Info.Default.InitialTime;
+                TimeSpent = Info.Default.InitialTime;
+                TimeLeft = Info.Default.InitialTime;
+                TimeLeftIsOver = false;
                 ResetOldData();
             }
             IsRunning = false;
@@ -203,6 +243,7 @@ namespace CountingLibrary.Core
         private void ResetOldData()
         {
             SymbolsCount = 0;
+            WrongSymbolsCount = 0;
             for (int i = 0; i < SymbolInfos.Count; i++)
             {
                 SymbolInfos[i].ResetCount();
@@ -236,7 +277,11 @@ namespace CountingLibrary.Core
         }
         private void PrepareSymbols()
         {
-            for (int i = 0; i < Info.Default.Symbols.Length; i++)
+            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+            {
+                Symbols.Add(Info.Default.Alphabet.Letters[i]);
+            }
+            for (int i = 0; i < 2; i++)
             {
                 Symbols.Add(Info.Default.Symbols[i]);
             }
@@ -244,11 +289,24 @@ namespace CountingLibrary.Core
             {
                 Symbols.Add(Info.Default.Numbers[i]);
             }
-            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+            for (int i = 2; i < Info.Default.Symbols.Length; i++)
             {
-                Symbols.Add(Info.Default.Alphabet.Letters[i]);
+                Symbols.Add(Info.Default.Symbols[i]);
             }
-            Symbols = Symbols.OrderBy(x => x).ToList();
+        }
+        private string CalculateTimeLeft()
+        {
+            ulong processedSymbolsCount = SymbolsCount + WrongSymbolsCount;
+            double averageTimePerSymbol = Stopwatch.Elapsed.TotalSeconds / processedSymbolsCount;
+            try
+            {
+                return TimeSpan.FromSeconds(averageTimePerSymbol * (TotalSymbolsCount - processedSymbolsCount)).ToString(Info.Default.TimeParseString);
+            }
+            catch (OverflowException)
+            {
+                TimeLeftIsOver = true;
+                return Info.Default.InitialTime;
+            }
         }
         #endregion
     }

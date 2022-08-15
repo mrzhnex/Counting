@@ -72,17 +72,23 @@ namespace CountingGUI.Windows
             {
                 Workspace.SortBy(CountingLibrary.Main.Sort.Count);
             }
+            else if (DefaultMenuItem.IsChecked)
+            {
+                Workspace.SortBy(CountingLibrary.Main.Sort.Default);
+            }
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
         }
         public void OnSort(SortEvent sortEvent)
         {
-            ReBindingSymbolsDataContext();
+            if (!IsWindowClosing)
+                ReBindingSymbolsDataContext();
         }
         private void ReBindingSymbolsDataContext()
         {
             for (int i = 0; i < SymbolInfos.Count; i++)
             {
-                Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.SymbolInfos[i]);
+                if (!IsWindowClosing)
+                    Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.SymbolInfos[i]);
             }
         }
         #endregion
@@ -118,10 +124,6 @@ namespace CountingGUI.Windows
                 thread1.Start();
             }
         }
-        private void Settings_Click(object sender, RoutedEventArgs e)
-        {
-            new Settings() { Owner = this }.ShowDialog();
-        }
         private void Help_Click(object sender, RoutedEventArgs e)
         {
             new Help() { Owner = this }.ShowDialog();
@@ -152,12 +154,21 @@ namespace CountingGUI.Windows
                 ReBindingSymbolsDataContext();
             }
         }
+
+        #endregion
+
+        #region Settings
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            new Settings() { Owner = this }.ShowDialog();
+        }
         private void AlphabetMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (AlphabetMenuItem.IsChecked)
                 return;
             AlphabetMenuItem.IsChecked = true;
             CountMenuItem.IsChecked = false;
+            DefaultMenuItem.IsChecked = false;
             Sort();
         }
         private void CountMenuItem_Click(object sender, RoutedEventArgs e)
@@ -165,6 +176,16 @@ namespace CountingGUI.Windows
             if (CountMenuItem.IsChecked)
                 return;
             CountMenuItem.IsChecked = true;
+            AlphabetMenuItem.IsChecked = false;
+            DefaultMenuItem.IsChecked = false;
+            Sort();
+        }
+        private void DefaultMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (DefaultMenuItem.IsChecked)
+                return;
+            DefaultMenuItem.IsChecked = true;
+            CountMenuItem.IsChecked = false;
             AlphabetMenuItem.IsChecked = false;
             Sort();
         }
