@@ -10,7 +10,7 @@ namespace CountingLibrary.Core
     public class Workspace : INotifyPropertyChanged
     {
         private DirectoryInfo DirectoryInfo { get; set; }
-        public Settings Settings { get; private set; } = new();
+        public Settings Settings { get; set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; private set; } = new();
         public List<SymbolInfo> SymbolInfos { get; private set; } = new();
         public List<char> Symbols { get; private set; } = new();
@@ -68,16 +68,17 @@ namespace CountingLibrary.Core
         private ulong TotalSymbolsCount { get; set; }
         private bool TimeLeftIsOver { get; set; }
 
-        public Workspace(DirectoryInfo directoryInfo)
+        public Workspace(string path)
         {
-            DirectoryInfo = directoryInfo;
+            DirectoryInfo = new(path);
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
         }
-        public Workspace(string path)
+        public Workspace(string path, Settings settings)
         {
             DirectoryInfo = new(path);
+            Settings = settings;
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
@@ -159,9 +160,12 @@ namespace CountingLibrary.Core
                         {
                             SymbolsCount++;
                             SymbolInfos.First(x => x.Symbol == char.ToLower(c)).AddCount();
-                            foreach (SymbolInfo symbolInfo in SymbolInfos)
+                            if (Settings.UpdateInRealTime)
                             {
-                                symbolInfo.UpdatePercent();
+                                foreach (SymbolInfo symbolInfo in SymbolInfos)
+                                {
+                                    symbolInfo.UpdatePercent();
+                                }
                             }
                         }
                         else
@@ -172,7 +176,7 @@ namespace CountingLibrary.Core
                         TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
                         if (!TimeLeftIsOver)
                             TimeLeft = CalculateTimeLeft();
-                        if (Stopwatch.Elapsed.TotalSeconds > seconds)
+                        if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
                         {
                             seconds = Stopwatch.Elapsed.TotalSeconds + 0.5d;
                             SortBy(Sort);
@@ -185,6 +189,10 @@ namespace CountingLibrary.Core
                         SymbolInfos.First(x => x.Symbol == char.ToLower('\n')).AddCount();
                     }
                 }
+            }
+            foreach (SymbolInfo symbolInfo in SymbolInfos)
+            {
+                symbolInfo.UpdatePercent();
             }
             SortBy(Sort);
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());

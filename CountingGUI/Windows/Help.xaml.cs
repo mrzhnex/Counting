@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using CountingLibrary.Core;
 
 namespace CountingGUI.Windows
 {
@@ -7,6 +8,7 @@ namespace CountingGUI.Windows
         public Help()
         {
             InitializeComponent();
+            DataContext = Workspace.WorkspaceInstance;
         }
     }
 }

@@ -16,11 +16,12 @@ namespace CountingLibrary.Core
             {
                 count = value;
                 OnPropertyChanged();
-                UpdatePercent();
+                if (Workspace.WorkspaceInstance.Settings.UpdateInRealTime)
+                    UpdatePercent();
             }
         }
-        private float percent;
-        public float Percent
+        private double percent;
+        public double Percent
         {
             get { return percent; }
             private set
@@ -35,7 +36,7 @@ namespace CountingLibrary.Core
             Symbol = symbol;
             SymbolView = symbol.ToString();
             if (symbol == '\n')
-                SymbolView = "строка";
+                SymbolView = "enter";
             else if (symbol == ' ')
                 SymbolView = "пробел";
         }
@@ -52,7 +53,7 @@ namespace CountingLibrary.Core
                 Percent = 0;
                 return;
             }
-            Percent = Workspace.WorkspaceInstance.SymbolInfos.Any(x => x.Symbol == Symbol) ? Workspace.WorkspaceInstance.SymbolInfos.First(x => x.Symbol == Symbol).Count / (float)Workspace.WorkspaceInstance.SymbolsCount * 100 : 0.0f;
+            Percent = Math.Round(Workspace.WorkspaceInstance.SymbolInfos.Any(x => x.Symbol == Symbol) ? Workspace.WorkspaceInstance.SymbolInfos.First(x => x.Symbol == Symbol).Count / (float)Workspace.WorkspaceInstance.SymbolsCount * 100 : 0.0f, 2);
         }
         internal void AddCount()
         {

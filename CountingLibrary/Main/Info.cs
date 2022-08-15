@@ -1,6 +1,6 @@
 ﻿namespace CountingLibrary.Main
 {
-    public class Info
+    internal class Info
     {
         public char[] Numbers { get; private set; } = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
         public char[] Symbols { get; private set; } = new char[] { ' ', '\n', '-', '+', '=', '.', ',', ';', ':', '"', '!', '?', '%', '№', '#', '~', '*', '@', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\' };
@@ -10,6 +10,7 @@
         public string TimeParseString { get; private set; } = @"hh\:mm\:ss\.ff";
         public static Info Default { get; private set; } = new();
     }
+
     public enum Sort
     {
         Default, Alphabet, Count

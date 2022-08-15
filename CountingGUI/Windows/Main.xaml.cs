@@ -13,14 +13,13 @@ namespace CountingGUI.Windows
 {
     public partial class Main : Window, IEventHandlerSort
     {
-        private Workspace Workspace { get; set; } = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
         private List<Controls.SymbolInfo> SymbolInfos { get; set; } = new();
         private bool IsWindowClosing { get; set; }
 
         public Main()
         {
             InitializeComponent();
-            SystemInfoControl.DataContext = Workspace;
+            DataContext = Workspace.WorkspaceInstance;
             GenerateGrids();
             Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
         }
@@ -28,14 +27,14 @@ namespace CountingGUI.Windows
         #region Non GUI
         private void GenerateGrids()
         {
-            for (int i = 0; i < Workspace.Symbols.Count; i++)
+            for (int i = 0; i < Workspace.WorkspaceInstance.Symbols.Count; i++)
             {
-                CreateObject(Workspace.Symbols[i], i, (int)Math.Ceiling(Workspace.Symbols.Count / 2.0));
+                CreateObject(Workspace.WorkspaceInstance.Symbols[i], i, (int)Math.Ceiling(Workspace.WorkspaceInstance.Symbols.Count / 2.0));
             }
         }
         private void CreateObject(char symbol, int index, int rowsCount)
         {
-            Controls.SymbolInfo symbolInfo = new(char.ToLower(symbol), Workspace);
+            Controls.SymbolInfo symbolInfo = new(char.ToLower(symbol));
             
             if (index < rowsCount)
             {
@@ -66,15 +65,15 @@ namespace CountingGUI.Windows
         {
             if (AlphabetMenuItem.IsChecked)
             {
-                Workspace.SortBy(CountingLibrary.Main.Sort.Alphabet);
+                Workspace.WorkspaceInstance.SortBy(CountingLibrary.Main.Sort.Alphabet);
             }
             else if (CountMenuItem.IsChecked)
             {
-                Workspace.SortBy(CountingLibrary.Main.Sort.Count);
+                Workspace.WorkspaceInstance.SortBy(CountingLibrary.Main.Sort.Count);
             }
             else if (DefaultMenuItem.IsChecked)
             {
-                Workspace.SortBy(CountingLibrary.Main.Sort.Default);
+                Workspace.WorkspaceInstance.SortBy(CountingLibrary.Main.Sort.Default);
             }
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
         }
@@ -88,7 +87,7 @@ namespace CountingGUI.Windows
             for (int i = 0; i < SymbolInfos.Count; i++)
             {
                 if (!IsWindowClosing)
-                    Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.SymbolInfos[i]);
+                    Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.WorkspaceInstance.SymbolInfos[i]);
             }
         }
         #endregion
@@ -96,28 +95,28 @@ namespace CountingGUI.Windows
         #region Click
         private void Pause_Click(object sender, RoutedEventArgs e)
         {
-            if (Workspace.ManualResetEvent.WaitOne(0))
+            if (Workspace.WorkspaceInstance.ManualResetEvent.WaitOne(0))
             {
-                Workspace.Pause();
+                Workspace.WorkspaceInstance.Pause();
                 Pause.Header = "Продолжить";
             }
             else
             {
                 Pause.Header = "Приостановить";
-                Workspace.Continue();
+                Workspace.WorkspaceInstance.Continue();
             }
         }
         private void Start_Click(object sender, RoutedEventArgs e)
         {
-            if (Workspace.IsRunning)
+            if (Workspace.WorkspaceInstance.IsRunning)
             {
-                Workspace.Stop();
+                Workspace.WorkspaceInstance.Stop();
                 Start.Header = "Обработка";
                 Pause.Header = "Приостановить";
             }
             else
             {
-                Thread thread = new(Workspace.Start);
+                Thread thread = new(Workspace.WorkspaceInstance.Start);
                 Thread thread1 = new(() => DisablePauseButton(thread));
                 Start.Header = "Остановить";
                 thread.Start();
@@ -130,7 +129,7 @@ namespace CountingGUI.Windows
         }
         private void SelectWorkspace_Click(object sender, RoutedEventArgs e)
         {
-            if (Workspace.IsRunning)
+            if (Workspace.WorkspaceInstance.IsRunning)
                 return;
             CommonFileDialog commonFileDialog = new CommonOpenFileDialog
             {
@@ -147,10 +146,11 @@ namespace CountingGUI.Windows
             };
             if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
-                Sort oldSort = Workspace.Sort;
-                Workspace = new(commonFileDialog.FileName);
-                Workspace.SortBy(oldSort);
-                SystemInfoControl.DataContext = Workspace;
+                Sort oldSort = Workspace.WorkspaceInstance.Sort;
+                Workspace.WorkspaceInstance = new(commonFileDialog.FileName, Workspace.WorkspaceInstance.Settings);
+                DataContext = Workspace.WorkspaceInstance;
+                Workspace.WorkspaceInstance.SortBy(oldSort);
+                SystemInfoControl.DataContext = Workspace.WorkspaceInstance;
                 ReBindingSymbolsDataContext();
             }
         }
@@ -194,8 +194,8 @@ namespace CountingGUI.Windows
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             IsWindowClosing = true;
-            if (Workspace.IsRunning)
-                Workspace.Stop();
+            if (Workspace.WorkspaceInstance.IsRunning)
+                Workspace.WorkspaceInstance.Stop();
         }
     }
 }

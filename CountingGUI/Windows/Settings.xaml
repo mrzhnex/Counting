@@ -4,8 +4,30 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
+        FontSize="{Binding Settings.FontSize}"
+        FontFamily="{Binding Settings.FontFamily}"
         Title="Настройки" Height="200" Width="400">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Цветовая гамма" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
+        <ComboBox x:Name="SolidColorBrushComboBox" Grid.Row="0" Grid.Column="1" SelectionChanged="SolidColorBrushComboBox_SelectionChanged"/>
 
+        <TextBlock Text="Размер шрифта" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
+        <ComboBox x:Name="FontSizeComboBox" Grid.Row="1" Grid.Column="1" SelectionChanged="FontSizeComboBox_SelectionChanged"/>
+
+        <TextBlock Text="Тип шрифта" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
+        <ComboBox x:Name="FontFamilyComboBox" Grid.Row="2" Grid.Column="1" SelectionChanged="FontFamilyComboBox_SelectionChanged"/>
+
+        <TextBlock Text="Обновление в реальном времени" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
+        <CheckBox x:Name="UpdateInRealTime" Grid.Row="3" Grid.Column="1" IsChecked="{Binding Settings.UpdateInRealTime}" VerticalAlignment="Center" HorizontalAlignment="Center" Checked="UpdateInRealTime_Checked" Unchecked="UpdateInRealTime_Checked"/>
     </Grid>
 </Window>

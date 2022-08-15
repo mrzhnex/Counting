@@ -5,10 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="clr-namespace:CountingGUI.Controls"
         mc:Ignorable="d"
+        FontSize="{Binding Settings.FontSize}"
+        FontFamily="{Binding Settings.FontFamily}"
         Closing="Window_Closing"
         Title="Программа подсчета знаков" Height="850" Width="1000">
     <Border BorderBrush="Black" BorderThickness="2">
-        <Grid x:Name="BackgroundGrid" Background="RoyalBlue">
+        <Grid x:Name="BackgroundGrid" Background="{Binding Settings.Scheme.SolidColorBrush}">
             <Border BorderBrush="Black" BorderThickness="2" Margin="20">
                 <Grid x:Name="MainGrid" Background="White">
                     <Grid.RowDefinitions>
@@ -41,7 +43,7 @@
                             </Grid.RowDefinitions>
                             <Controls:SymbolMainInfo Grid.Row="0"/>
                         </Grid>
-                        <Grid Background="RoyalBlue" Grid.Column="1"/>
+                        <Grid Background="{Binding Settings.Scheme.SolidColorBrush}" Grid.Column="1"/>
                         <Grid x:Name="DynamicGridTwo" Grid.Column="2">
                             <Grid.RowDefinitions>
                                 <RowDefinition></RowDefinition>
