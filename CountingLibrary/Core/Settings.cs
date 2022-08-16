@@ -12,8 +12,6 @@ namespace CountingLibrary.Core
         public int MaxFontSize { get; private set; } = 14;
         [XmlIgnore]
         public int MinFontSize { get; private set; } = 8;
-
-        private int fontSize = 12;
         public int FontSize
         {
             get { return fontSize; }
@@ -23,8 +21,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-
-        private string fontFamily = "Times New Roman";
+        private int fontSize = 12;
         public string FontFamily
         {
             get { return fontFamily; }
@@ -34,8 +31,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-
-        private string scheme = "Стандартный";
+        private string fontFamily = "Times New Roman";
         public string Scheme
         {
             get { return scheme; }
@@ -46,8 +42,18 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
+        private string scheme = "Стандартный";
+        public bool UpdateInRealTime
+        {
+            get { return updateInRealTime; }
+            set
+            {
+                updateInRealTime = value;
+                OnPropertyChanged();
+            }
+        }
+        private bool updateInRealTime = true;
 
-        private SolidColorBrush solidColorBrush = new(Colors.RoyalBlue);
         [XmlIgnore]
         public SolidColorBrush SolidColorBrush
         {
@@ -58,6 +64,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
+        private SolidColorBrush solidColorBrush = new(Colors.RoyalBlue);
 
         [XmlIgnore]
         public Dictionary<string, SolidColorBrush> Schemes { get; set; } = new()
@@ -66,17 +73,6 @@ namespace CountingLibrary.Core
             { "Серый", new SolidColorBrush(Colors.DarkGray) },
             { "Зелено-голубой", new SolidColorBrush(Colors.CadetBlue)}
         };
-
-        private bool updateInRealTime = true;
-        public bool UpdateInRealTime
-        {
-            get { return updateInRealTime; }
-            set
-            {
-                updateInRealTime = value;
-                OnPropertyChanged();
-            }
-        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")

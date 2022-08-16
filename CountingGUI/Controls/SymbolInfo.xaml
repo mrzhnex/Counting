@@ -8,18 +8,18 @@
     <Border BorderBrush="Black" BorderThickness="0,1,0,0">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.2*"></ColumnDefinition>
+                <ColumnDefinition Width="0.4*"></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="0" Background="LightGray">
-                <TextBlock x:Name="Symbol" Text="{Binding Path=SymbolView}" TextAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock x:Name="Symbol" Text="{Binding Path=SymbolView}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
             </Border>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="1">
-                <TextBlock x:Name="Count" Text="{Binding Path=Count}" TextAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock x:Name="Count" Text="{Binding Path=Count}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
             </Border>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="2">
-                <TextBlock x:Name="Percent" Text="{Binding Path=Percent}" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock x:Name="Percent" Text="{Binding Path=Percent}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
             </Border>
         </Grid>
     </Border>

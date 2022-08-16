@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 using CountingLibrary.Main;
 
 namespace CountingLibrary.Core
@@ -14,29 +13,30 @@ namespace CountingLibrary.Core
             DirectoryInfo = directoryInfo;
         }
 
-        internal Settings LoadSettings()
+        internal Settings LoadSettings(out bool catchException)
         {
             try
             {
                 using FileStream fs = new(Info.Default.SettingsFilePath, FileMode.Open);
                 Settings? settings = XmlSerializer.Deserialize(fs) as Settings;
+                catchException = false;
                 return settings ?? new Settings();
             }
             catch (Exception)
             {
+                catchException = true;
                 return new();
             }
         }
         internal void SaveSettings()
-        {
-            try
+        {  
+            bool catchException = true;
+            while (catchException)
             {
-                using FileStream fs = new(Info.Default.SettingsFilePath, FileMode.OpenOrCreate);
+                using FileStream fs = new(Info.Default.SettingsFilePath, FileMode.Truncate);
                 XmlSerializer.Serialize(fs, Workspace.WorkspaceInstance.Settings);
-            }
-            catch (Exception)
-            {
-                //log
+                fs.Close();
+                LoadSettings(out catchException);
             }
         }
         internal string[] GetFiles()

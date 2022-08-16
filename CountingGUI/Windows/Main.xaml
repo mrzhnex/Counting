@@ -8,7 +8,7 @@
         FontSize="{Binding Settings.FontSize}"
         FontFamily="{Binding Settings.FontFamily}"
         Closing="Window_Closing"
-        Title="Программа подсчета знаков" Height="850" Width="1000">
+        Title="Программа подсчета знаков" Height="800" Width="700" MinHeight="800" MinWidth="700">
     <Border BorderBrush="Black" BorderThickness="2">
         <Grid x:Name="BackgroundGrid" Background="{Binding Settings.SolidColorBrush}">
             <Border BorderBrush="Black" BorderThickness="2" Margin="20">

@@ -67,7 +67,7 @@ namespace CountingLibrary.Core
         public Workspace(string path)
         {
             HardDriveManager = new(new(path));
-            Settings = HardDriveManager.LoadSettings();
+            Settings = HardDriveManager.LoadSettings(out _);
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
