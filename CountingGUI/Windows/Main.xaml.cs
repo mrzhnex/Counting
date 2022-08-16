@@ -194,6 +194,7 @@ namespace CountingGUI.Windows
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             IsWindowClosing = true;
+            Workspace.WorkspaceInstance.SaveSettings();
             if (Workspace.WorkspaceInstance.IsRunning)
                 Workspace.WorkspaceInstance.Stop();
         }

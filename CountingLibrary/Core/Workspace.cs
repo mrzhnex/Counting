@@ -9,8 +9,8 @@ namespace CountingLibrary.Core
 {
     public class Workspace : INotifyPropertyChanged
     {
-        private DirectoryInfo DirectoryInfo { get; set; }
-        public Settings Settings { get; set; } = new();
+        private HardDriveManager HardDriveManager { get; set; }
+        public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; private set; } = new();
         public List<SymbolInfo> SymbolInfos { get; private set; } = new();
         public List<char> Symbols { get; private set; } = new();
@@ -57,10 +57,6 @@ namespace CountingLibrary.Core
             }
         }
 
-        public string DirectoryPath
-        {
-            get { return DirectoryInfo is null ? string.Empty : DirectoryInfo.FullName; }
-        }
         public ManualResetEvent ManualResetEvent { get; private set; } = new(false);
         public bool IsRunning { get; private set; } = false;
         public static Workspace WorkspaceInstance { get; set; } = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
@@ -70,14 +66,15 @@ namespace CountingLibrary.Core
 
         public Workspace(string path)
         {
-            DirectoryInfo = new(path);
+            HardDriveManager = new(new(path));
+            Settings = HardDriveManager.LoadSettings();
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
         }
         public Workspace(string path, Settings settings)
         {
-            DirectoryInfo = new(path);
+            HardDriveManager = new(new(path));
             Settings = settings;
             PrepareSymbols();
             PrepareSymbolInfos();
@@ -85,16 +82,9 @@ namespace CountingLibrary.Core
         }
 
         #region Settings
-        public bool RemoveFileExtension(string extension)
+        public void SaveSettings()
         {
-            return Settings.FileExtensions.Remove(extension);
-        }
-        public bool AddFileExtension(string extension)
-        {
-            if (Settings.FileExtensions.Contains(extension))
-                return false;
-            Settings.FileExtensions.Add(extension);
-            return true;
+            HardDriveManager.SaveSettings();
         }
         public void SortBy(Sort sort)
         {
@@ -120,7 +110,7 @@ namespace CountingLibrary.Core
         public void FastScan()
         {
             FileInfos.Clear();
-            foreach (string fullFileName in GetFiles())
+            foreach (string fullFileName in HardDriveManager.GetFiles())
             {
                 try
                 {
@@ -192,6 +182,7 @@ namespace CountingLibrary.Core
             }
             foreach (SymbolInfo symbolInfo in SymbolInfos)
             {
+                symbolInfo.ForceUpdate();
                 symbolInfo.UpdatePercent();
             }
             SortBy(Sort);
@@ -270,17 +261,6 @@ namespace CountingLibrary.Core
             for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
             {
                 SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Alphabet.Letters[i])));
-            }
-        }
-        public string[] GetFiles()
-        {
-            try
-            {
-                return DirectoryInfo.GetFiles("*.*", Settings.IncludeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).Where(x => Settings.FileExtensions.Contains(Path.GetExtension(x.Name).ToLower())).Select(x => x.FullName).ToArray();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Array.Empty<string>();
             }
         }
         private void PrepareSymbols()

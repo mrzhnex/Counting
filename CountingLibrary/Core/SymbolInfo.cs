@@ -15,9 +15,11 @@ namespace CountingLibrary.Core
             private set
             {
                 count = value;
-                OnPropertyChanged();
                 if (Workspace.WorkspaceInstance.Settings.UpdateInRealTime)
+                {
+                    OnPropertyChanged();
                     UpdatePercent();
+                }
             }
         }
         private double percent;
@@ -62,6 +64,10 @@ namespace CountingLibrary.Core
         internal void ResetCount()
         {
             Count = 0;
+        }
+        internal void ForceUpdate()
+        {
+            OnPropertyChanged(nameof(Count));
         }
         public override string ToString()
         {

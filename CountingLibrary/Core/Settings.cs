@@ -1,16 +1,16 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using CountingLibrary.Main;
 using System.Windows.Media;
+using System.Xml.Serialization;
 
 namespace CountingLibrary.Core
 {
+    [Serializable]
     public class Settings : INotifyPropertyChanged
     {
-        public List<string> FileExtensions { get; private set; } = Info.Default.FileExtensions.ToList();
-        public bool IncludeSubfolders { get; set; } = true;
-        public Alphabet Alphabet { get; set; } = Alphabet.Ru;
+        [XmlIgnore]
         public int MaxFontSize { get; private set; } = 14;
+        [XmlIgnore]
         public int MinFontSize { get; private set; } = 8;
 
         private int fontSize = 12;
@@ -23,7 +23,8 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-        private string fontFamily { get; set; } = "Times New Roman";
+
+        private string fontFamily = "Times New Roman";
         public string FontFamily
         {
             get { return fontFamily; }
@@ -34,21 +35,36 @@ namespace CountingLibrary.Core
             }
         }
 
-        private Scheme scheme { get; set; } = new Scheme("Стандартный", new SolidColorBrush(Colors.RoyalBlue));
-        public Scheme Scheme
+        private string scheme = "Стандартный";
+        public string Scheme
         {
             get { return scheme; }
             set
             {
                 scheme = value;
+                SolidColorBrush = Schemes[scheme];
                 OnPropertyChanged();
             }
         }
-        public List<Scheme> Schemes { get; private set; } = new()
+
+        private SolidColorBrush solidColorBrush = new(Colors.RoyalBlue);
+        [XmlIgnore]
+        public SolidColorBrush SolidColorBrush
         {
-            new Scheme("Стандартный", new SolidColorBrush(Colors.RoyalBlue)),
-            new Scheme("Серый", new SolidColorBrush(Colors.DarkGray)),
-            new Scheme("Зелено-голубой", new SolidColorBrush(Colors.CadetBlue))
+            get { return solidColorBrush; }
+            private set
+            {
+                solidColorBrush = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [XmlIgnore]
+        public Dictionary<string, SolidColorBrush> Schemes { get; set; } = new()
+        {
+            { "Стандартный", new SolidColorBrush(Colors.RoyalBlue) },
+            { "Серый", new SolidColorBrush(Colors.DarkGray) },
+            { "Зелено-голубой", new SolidColorBrush(Colors.CadetBlue)}
         };
 
         private bool updateInRealTime = true;
@@ -67,5 +83,7 @@ namespace CountingLibrary.Core
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
+
+        public Settings() { }
     }
 }

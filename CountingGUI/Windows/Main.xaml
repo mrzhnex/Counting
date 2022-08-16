@@ -10,7 +10,7 @@
         Closing="Window_Closing"
         Title="Программа подсчета знаков" Height="850" Width="1000">
     <Border BorderBrush="Black" BorderThickness="2">
-        <Grid x:Name="BackgroundGrid" Background="{Binding Settings.Scheme.SolidColorBrush}">
+        <Grid x:Name="BackgroundGrid" Background="{Binding Settings.SolidColorBrush}">
             <Border BorderBrush="Black" BorderThickness="2" Margin="20">
                 <Grid x:Name="MainGrid" Background="White">
                     <Grid.RowDefinitions>
@@ -24,8 +24,8 @@
                         <MenuItem x:Name="Pause" Header="Приостановить" Click="Pause_Click" IsEnabled="False"/>
                         <MenuItem Header="Сортировка">
                             <MenuItem x:Name="DefaultMenuItem" Header="По умолчанию" IsChecked="True" Click="DefaultMenuItem_Click" StaysOpenOnClick="True"/>
-                            <MenuItem x:Name="AlphabetMenuItem" Header="Алфавит" Click="AlphabetMenuItem_Click" StaysOpenOnClick="True"/>
-                            <MenuItem x:Name="CountMenuItem" Header="Количество" Click="CountMenuItem_Click" StaysOpenOnClick="True"/>
+                            <MenuItem x:Name="AlphabetMenuItem" Header="По алфавиту" Click="AlphabetMenuItem_Click" StaysOpenOnClick="True"/>
+                            <MenuItem x:Name="CountMenuItem" Header="По количеству" Click="CountMenuItem_Click" StaysOpenOnClick="True"/>
                         </MenuItem>
                         <MenuItem x:Name="Settings" Header="Настройки" Click="Settings_Click"/>
                         <MenuItem x:Name="Help" Header="Справка" Click="Help_Click"/>
@@ -43,7 +43,7 @@
                             </Grid.RowDefinitions>
                             <Controls:SymbolMainInfo Grid.Row="0"/>
                         </Grid>
-                        <Grid Background="{Binding Settings.Scheme.SolidColorBrush}" Grid.Column="1"/>
+                        <Grid Background="{Binding Settings.SolidColorBrush}" Grid.Column="1"/>
                         <Grid x:Name="DynamicGridTwo" Grid.Column="2">
                             <Grid.RowDefinitions>
                                 <RowDefinition></RowDefinition>
