@@ -1,55 +1,32 @@
 ﻿using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
 using CountingLibrary.Core;
 using Microsoft.WindowsAPICodePack.Dialogs;
-using System.Collections.Generic;
-using System;
 using CountingLibrary.Handlers;
 using CountingLibrary.Events;
 using CountingLibrary.Main;
+using System.ComponentModel;
+using CountingGUI.Controls;
+using System.Windows.Controls;
 
 namespace CountingGUI.Windows
 {
-    public partial class Main : Window, IEventHandlerSort
+    public partial class Main : Window, IEventHandlerSort, IEventHandlerChangeProcessingType
     {
-        private List<Controls.SymbolInfo> SymbolInfos { get; set; } = new();
         private bool IsWindowClosing { get; set; }
-
+        private OneSymbol OneSymbolControl { get; set; } = new();
+        private TwoSymbols TwoSymbolsControl { get; set; } = new();
         public Main()
         {
             InitializeComponent();
             DataContext = Workspace.WorkspaceInstance;
-            GenerateGrids();
+            Grid.SetRow(OneSymbolControl, 2);
+            Grid.SetRow(TwoSymbolsControl, 2);
             Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
+            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(Workspace.WorkspaceInstance.Settings.ProcessingTypes[Workspace.WorkspaceInstance.Settings.ProcessingType]));
         }
 
         #region Non GUI
-        private void GenerateGrids()
-        {
-            for (int i = 0; i < Workspace.WorkspaceInstance.Symbols.Count; i++)
-            {
-                CreateObject(Workspace.WorkspaceInstance.Symbols[i], i, (int)Math.Ceiling(Workspace.WorkspaceInstance.Symbols.Count / 2.0));
-            }
-        }
-        private void CreateObject(char symbol, int index, int rowsCount)
-        {
-            Controls.SymbolInfo symbolInfo = new(char.ToLower(symbol));
-            
-            if (index < rowsCount)
-            {
-                Grid.SetRow(symbolInfo, DynamicGridOne.RowDefinitions.Count);
-                DynamicGridOne.RowDefinitions.Add(new RowDefinition());
-                DynamicGridOne.Children.Add(symbolInfo);
-            }
-            else
-            {
-                Grid.SetRow(symbolInfo, DynamicGridTwo.RowDefinitions.Count);
-                DynamicGridTwo.RowDefinitions.Add(new RowDefinition());
-                DynamicGridTwo.Children.Add(symbolInfo);
-            }
-            SymbolInfos.Add(symbolInfo);
-        }
         private void DisablePauseButton(Thread thread)
         {
             Dispatcher.Invoke(() => Pause.IsEnabled = true);
@@ -75,21 +52,25 @@ namespace CountingGUI.Windows
             {
                 Workspace.WorkspaceInstance.SortBy(CountingLibrary.Main.Sort.Default);
             }
-            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
         }
         public void OnSort(SortEvent sortEvent)
         {
-            if (!IsWindowClosing)
-                ReBindingSymbolsDataContext();
-        }
-        private void ReBindingSymbolsDataContext()
-        {
-            for (int i = 0; i < SymbolInfos.Count; i++)
+            if (IsWindowClosing)
+                return;
+            switch (Workspace.WorkspaceInstance.Settings.ProcessingTypes[Workspace.WorkspaceInstance.Settings.ProcessingType])
             {
-                if (!IsWindowClosing)
-                    Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.WorkspaceInstance.SymbolInfos[i]);
+                case ProcessingType.OneSymbol:
+                    OneSymbolControl.ReBindingSymbolsDataContext();
+                    break;
+                case ProcessingType.TwoSymbols:
+                    TwoSymbolsControl.SortList(sortEvent.Sort);
+                    break;
+                case ProcessingType.Word:
+
+                    break;
             }
         }
+        
         #endregion
 
         #region Click
@@ -150,8 +131,8 @@ namespace CountingGUI.Windows
                 Workspace.WorkspaceInstance = new(commonFileDialog.FileName, Workspace.WorkspaceInstance.Settings);
                 DataContext = Workspace.WorkspaceInstance;
                 Workspace.WorkspaceInstance.SortBy(oldSort);
-                SystemInfoControl.DataContext = Workspace.WorkspaceInstance;
-                ReBindingSymbolsDataContext();
+                SystemInfoControl.DataContext = Workspace.WorkspaceInstance;               
+                OneSymbolControl.ReBindingSymbolsDataContext();
             }
         }
 
@@ -191,12 +172,32 @@ namespace CountingGUI.Windows
         }
         #endregion
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
             IsWindowClosing = true;
             Workspace.WorkspaceInstance.SaveSettings();
             if (Workspace.WorkspaceInstance.IsRunning)
                 Workspace.WorkspaceInstance.Stop();
+        }
+
+        public void OnChangeProcessingType(ChangeProcessingTypeEvent changeProcessingTypeEvent)
+        {
+            switch (changeProcessingTypeEvent.ProcessingType)
+            {
+                case ProcessingType.OneSymbol:
+                    MainGrid.Children.Add(OneSymbolControl);
+                    if (MainGrid.Children.Contains(TwoSymbolsControl))
+                        MainGrid.Children.Remove(TwoSymbolsControl);
+                    break;
+                case ProcessingType.TwoSymbols:
+                    MainGrid.Children.Add(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(OneSymbolControl))
+                        MainGrid.Children.Remove(OneSymbolControl);
+                    break;
+                case ProcessingType.Word:
+
+                    break;
+            }
         }
     }
 }

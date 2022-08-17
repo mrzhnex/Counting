@@ -13,6 +13,7 @@
             <RowDefinition/>
             <RowDefinition/>
             <RowDefinition/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -29,5 +30,8 @@
 
         <TextBlock Text="Обновление в реальном времени" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
         <CheckBox x:Name="UpdateInRealTime" Grid.Row="3" Grid.Column="1" IsChecked="{Binding Settings.UpdateInRealTime}" VerticalAlignment="Center" HorizontalAlignment="Center" Checked="UpdateInRealTime_Checked" Unchecked="UpdateInRealTime_Checked"/>
+
+        <TextBlock Text="Тип обработки" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
+        <ComboBox x:Name="ProcessingType" Grid.Row="4" Grid.Column="1" SelectionChanged="ProcessingType_SelectionChanged"/>
     </Grid>
 </Window>

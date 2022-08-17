@@ -2,6 +2,8 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Xml.Serialization;
+using CountingLibrary.Events;
+using CountingLibrary.Handlers;
 
 namespace CountingLibrary.Core
 {
@@ -67,11 +69,29 @@ namespace CountingLibrary.Core
         private SolidColorBrush solidColorBrush = new(Colors.RoyalBlue);
 
         [XmlIgnore]
-        public Dictionary<string, SolidColorBrush> Schemes { get; set; } = new()
+        public Dictionary<string, SolidColorBrush> Schemes { get; private set; } = new()
         {
             { "Стандартный", new SolidColorBrush(Colors.RoyalBlue) },
             { "Серый", new SolidColorBrush(Colors.DarkGray) },
             { "Зелено-голубой", new SolidColorBrush(Colors.CadetBlue)}
+        };
+
+        public string ProcessingType
+        {
+            get { return processingType; }
+            set
+            {
+                processingType = value;
+                OnPropertyChanged();            
+            }
+        }
+        private string processingType = "Знак";
+        [XmlIgnore]
+        public Dictionary<string, ProcessingType> ProcessingTypes { get; private set; } = new()
+        {
+            { "Знак", Core.ProcessingType.OneSymbol },
+            { "2 Знака", Core.ProcessingType.TwoSymbols },
+            { "Слово", Core.ProcessingType.Word }
         };
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -81,5 +101,9 @@ namespace CountingLibrary.Core
         }
 
         public Settings() { }
+    }
+    public enum ProcessingType
+    {
+        OneSymbol, TwoSymbols, Word
     }
 }

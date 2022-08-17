@@ -29,14 +29,23 @@ namespace CountingLibrary.Core
             }
         }
         internal void SaveSettings()
-        {  
+        {
             bool catchException = true;
             while (catchException)
             {
-                using FileStream fs = new(Info.Default.SettingsFilePath, FileMode.Truncate);
-                XmlSerializer.Serialize(fs, Workspace.WorkspaceInstance.Settings);
-                fs.Close();
-                LoadSettings(out catchException);
+                try
+                {
+                    if (!File.Exists(Info.Default.SettingsFilePath))
+                        File.Create(Info.Default.SettingsFilePath).Close();
+                    using FileStream fs = new(Info.Default.SettingsFilePath, FileMode.Truncate);
+                    XmlSerializer.Serialize(fs, Workspace.WorkspaceInstance.Settings);
+                    fs.Close();
+                    LoadSettings(out catchException);
+                }
+                catch (Exception)
+                {
+                    catchException = false;
+                }
             }
         }
         internal string[] GetFiles()

@@ -1,19 +1,21 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using CountingLibrary.Events;
 using CountingLibrary.Handlers;
 using CountingLibrary.Main;
 
 namespace CountingLibrary.Core
 {
-    public class Workspace : INotifyPropertyChanged
+    public class Workspace : INotifyPropertyChanged, IEventHandlerChangeProcessingType
     {
         private HardDriveManager HardDriveManager { get; set; }
         public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; private set; } = new();
-        public List<SymbolInfo> SymbolInfos { get; private set; } = new();
-        public List<char> Symbols { get; private set; } = new();
+        public ObservableCollection<SymbolInfo> SymbolInfos { get; private set; } = new();
+        public List<string> Symbols { get; private set; } = new();
         private Stopwatch Stopwatch { get; set; } = new();
 
         private string timeSpent = Info.Default.InitialTime;
@@ -71,6 +73,7 @@ namespace CountingLibrary.Core
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
+            Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
         }
         public Workspace(string path, Settings settings)
         {
@@ -79,6 +82,7 @@ namespace CountingLibrary.Core
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
+            Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
         }
 
         #region Settings
@@ -92,17 +96,25 @@ namespace CountingLibrary.Core
             switch (Sort)
             {
                 case Sort.Alphabet:
-                    SymbolInfos = SymbolInfos.OrderBy(x => x.Symbol).ToList();
+                    SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Symbol));
                     break;
                 case Sort.Count:
-                    SymbolInfos = SymbolInfos.OrderBy(x => x.Count).Reverse().ToList();
+                    SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Count).Reverse());
                     break;
                 case Sort.Default:
-                    SymbolInfos = SymbolInfos.OrderBy(x => Symbols.IndexOf(x.Symbol)).ToList();
+                    SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => Symbols.IndexOf(x.Symbol)));
                     break;
                 default:
                     break;
             }
+            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent(Sort));
+        }
+        public void OnChangeProcessingType(ChangeProcessingTypeEvent changeProcessingTypeEvent)
+        {
+            ResetOldData();
+            ResetSymbols();
+            PrepareSymbols();
+            PrepareSymbolInfos();
         }
         #endregion
 
@@ -140,53 +152,86 @@ namespace CountingLibrary.Core
                 {
                     if (!IsRunning)
                         break;
-                    foreach (char c in keyValuePair.Value[i])
-                    {
-                        ManualResetEvent.WaitOne();
 
-                        if (!IsRunning)
-                            break;
-                        if (SymbolInfos.Any(x => x.Symbol == char.ToLower(c)))
-                        {
-                            SymbolsCount++;
-                            SymbolInfos.First(x => x.Symbol == char.ToLower(c)).AddCount();
-                            if (Settings.UpdateInRealTime)
+                    switch (Settings.ProcessingTypes[Settings.ProcessingType])
+                    {
+                        case ProcessingType.OneSymbol:
+                            foreach (char c in keyValuePair.Value[i])
                             {
-                                foreach (SymbolInfo symbolInfo in SymbolInfos)
+                                ManualResetEvent.WaitOne();
+
+                                if (!IsRunning)
+                                    break;
+                                if (SymbolInfos.Any(x => x.Symbol == c.ToString().ToLower()))
                                 {
-                                    symbolInfo.UpdatePercent();
+                                    SymbolsCount++;
+                                    SymbolInfos.First(x => x.Symbol == c.ToString().ToLower()).AddCount();
+                                    if (Settings.UpdateInRealTime)
+                                    {
+                                        foreach (SymbolInfo symbolInfo in SymbolInfos)
+                                        {
+                                            symbolInfo.UpdatePercent();
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    WrongSymbolsCount++;
+                                }
+
+                                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
+                                if (!TimeLeftIsOver)
+                                    TimeLeft = CalculateTimeLeft();
+                                if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
+                                {
+                                    seconds = Stopwatch.Elapsed.TotalSeconds + 0.5d;
+                                    SortBy(Sort);
                                 }
                             }
-                        }
-                        else
-                        {
-                            WrongSymbolsCount++;
-                        }
-                
-                        TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
-                        if (!TimeLeftIsOver)
-                            TimeLeft = CalculateTimeLeft();
-                        if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
-                        {
-                            seconds = Stopwatch.Elapsed.TotalSeconds + 0.5d;
-                            SortBy(Sort);
-                            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
-                        }
+                            break;
+                        case ProcessingType.TwoSymbols:
+                            foreach (SymbolInfo symbolInfo in SymbolInfos)
+                            {
+                                int count = 0;
+                                try
+                                {
+                                    count = new Regex(symbolInfo.Symbol).Matches(keyValuePair.Value[i]).Count;
+                                }
+                                catch (RegexParseException) { }
+                                if (count > 0)
+                                {
+                                    symbolInfo.AddCount(count);
+                                    SymbolsCount += (ulong)count;
+                                }
+                                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
+                                if (!TimeLeftIsOver)
+                                    TimeLeft = CalculateTimeLeft();
+                                if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
+                                {
+                                    seconds = Stopwatch.Elapsed.TotalSeconds + 1.5d;
+                                    SortBy(Sort);
+                                }
+                            }
+                            break;
+                        case ProcessingType.Word:
+
+                            break;
                     }
+                    
+                    
                     if (i != keyValuePair.Value.Count - 1)
                     {
                         SymbolsCount++;
-                        SymbolInfos.First(x => x.Symbol == char.ToLower('\n')).AddCount();
+                        SymbolInfos.First(x => x.Symbol == "\n").AddCount();
                     }
                 }
             }
             foreach (SymbolInfo symbolInfo in SymbolInfos)
             {
                 symbolInfo.ForceUpdate();
-                symbolInfo.UpdatePercent();
             }
             SortBy(Sort);
-            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent());
+            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent(Sort));
             ManualResetEvent.Reset();
             Stopwatch.Stop();
             if (!IsRunning)
@@ -241,45 +286,74 @@ namespace CountingLibrary.Core
         }
         private void ResetOldData()
         {
-            SymbolsCount = 0;
-            WrongSymbolsCount = 0;
+            ResetSystemData();
             for (int i = 0; i < SymbolInfos.Count; i++)
             {
                 SymbolInfos[i].ResetCount();
             }
         }
-        private void PrepareSymbolInfos()
+        private void ResetSystemData()
         {
-            for (int i = 0; i < Info.Default.Symbols.Length; i++)
-            {
-                SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Symbols[i])));
-            }
-            for (int i = 0; i < Info.Default.Numbers.Length; i++)
-            {
-                SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Numbers[i])));
-            }
-            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
-            {
-                SymbolInfos.Add(new SymbolInfo(char.ToLower(Info.Default.Alphabet.Letters[i])));
-            }
+            TimeSpent = Info.Default.InitialTime;
+            TimeLeft = Info.Default.InitialTime;
+            SymbolsCount = 0;
+            WrongSymbolsCount = 0;
+        }
+        private void ResetSymbols()
+        {
+            Symbols.Clear();
+            SymbolInfos.Clear();
         }
         private void PrepareSymbols()
         {
-            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+            switch (Settings.ProcessingTypes[Settings.ProcessingType])
             {
-                Symbols.Add(Info.Default.Alphabet.Letters[i]);
+                case ProcessingType.OneSymbol:
+                    for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+                    {
+                        Symbols.Add(Info.Default.Alphabet.Letters[i].ToString());
+                    }
+                    for (int i = 0; i < 2; i++)
+                    {
+                        Symbols.Add(Info.Default.Symbols[i].ToString());
+                    }
+                    for (int i = 0; i < Info.Default.Numbers.Length; i++)
+                    {
+                        Symbols.Add(Info.Default.Numbers[i].ToString());
+                    }
+                    for (int i = 2; i < Info.Default.Symbols.Length; i++)
+                    {
+                        Symbols.Add(Info.Default.Symbols[i].ToString());
+                    }
+                    break;
+                case ProcessingType.TwoSymbols:
+                    List<string> symbols = new();
+                    for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+                    {
+                        symbols.Add(Info.Default.Alphabet.Letters[i].ToString());
+                    }
+                    for (int i = 2; i < 9; i++)
+                    {
+                        symbols.Add(Info.Default.Symbols[i].ToString());
+                    }
+                    Symbols.Add("\n");
+                    foreach (string s in symbols)
+                    {
+                        foreach (string s2 in symbols)
+                        {
+                            Symbols.Add(s + s2);
+                        }
+                    }
+                    break;
+                case ProcessingType.Word:
+                    break;
             }
-            for (int i = 0; i < 2; i++)
+        }
+        private void PrepareSymbolInfos()
+        {
+            for (int i = 0; i < Symbols.Count; i++)
             {
-                Symbols.Add(Info.Default.Symbols[i]);
-            }
-            for (int i = 0; i < Info.Default.Numbers.Length; i++)
-            {
-                Symbols.Add(Info.Default.Numbers[i]);
-            }
-            for (int i = 2; i < Info.Default.Symbols.Length; i++)
-            {
-                Symbols.Add(Info.Default.Symbols[i]);
+                SymbolInfos.Add(new(Symbols[i]));
             }
         }
         private string CalculateTimeLeft()

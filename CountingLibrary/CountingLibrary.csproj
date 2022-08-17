@@ -14,7 +14,7 @@
       <HintPath>..\..\TabulaComplex\Logging\bin\Debug\net5.0\Logging.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore">
-      <HintPath>..\CountingGUI\bin\Release\net6.0-windows\publish\win-x64\PresentationCore.dll</HintPath>
+      <HintPath>..\..\..\Heap\PresentationCore.dll</HintPath>
     </Reference>
   </ItemGroup>
 

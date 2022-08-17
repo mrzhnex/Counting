@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using CountingLibrary.Core;
+using CountingLibrary.Events;
+using CountingLibrary.Handlers;
 
 namespace CountingGUI.Windows
 {
@@ -29,9 +31,16 @@ namespace CountingGUI.Windows
             {
                 SolidColorBrushComboBox.Items.Add(keyValuePair.Key);
             }
+            foreach (KeyValuePair<string, ProcessingType> keyValuePair in Workspace.WorkspaceInstance.Settings.ProcessingTypes)
+            {
+                ProcessingType.Items.Add(keyValuePair.Key);
+            }
             FontSizeComboBox.SelectedValue = Workspace.WorkspaceInstance.Settings.FontSize;
             FontFamilyComboBox.SelectedValue = Workspace.WorkspaceInstance.Settings.FontFamily;
             SolidColorBrushComboBox.SelectedValue = Workspace.WorkspaceInstance.Settings.Scheme;
+            ProcessingType.SelectedValue = Workspace.WorkspaceInstance.Settings.ProcessingType;
+            if (Workspace.WorkspaceInstance.IsRunning)
+                ProcessingType.IsEnabled = false;
         }
 
         private void FontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -46,11 +55,18 @@ namespace CountingGUI.Windows
         {
             Workspace.WorkspaceInstance.Settings.Scheme = (string)((ComboBox)sender).SelectedValue;
         }
-
         private void UpdateInRealTime_Checked(object sender, RoutedEventArgs e)
         {
             if (IsLoaded)
-                Workspace.WorkspaceInstance.Settings.UpdateInRealTime = (bool)((CheckBox)sender).IsChecked;
+                Workspace.WorkspaceInstance.Settings.UpdateInRealTime = ((CheckBox)sender).IsChecked ?? false;
+        }
+        private void ProcessingType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (IsLoaded)
+            {
+                Workspace.WorkspaceInstance.Settings.ProcessingType = (string)((ComboBox)sender).SelectedValue;
+                Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(Workspace.WorkspaceInstance.Settings.ProcessingTypes[Workspace.WorkspaceInstance.Settings.ProcessingType]));
+            }
         }
     }
 }

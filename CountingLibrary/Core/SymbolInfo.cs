@@ -5,7 +5,7 @@ namespace CountingLibrary.Core
 {
     public class SymbolInfo : INotifyPropertyChanged
     {
-        public char Symbol { get; private set; }
+        public string Symbol { get; private set; }
         public string SymbolView { get; private set; }
 
         private int count;
@@ -33,13 +33,13 @@ namespace CountingLibrary.Core
             }
         }
 
-        internal SymbolInfo(char symbol)
+        internal SymbolInfo(string symbol)
         {
             Symbol = symbol;
             SymbolView = symbol.ToString();
-            if (symbol == '\n')
+            if (symbol == "\n")
                 SymbolView = "enter";
-            else if (symbol == ' ')
+            else if (symbol == " ")
                 SymbolView = "пробел";
         }
 
@@ -61,13 +61,19 @@ namespace CountingLibrary.Core
         {
             Count++;
         }
+        internal void AddCount(int count)
+        {
+            Count += count;
+        }
         internal void ResetCount()
         {
             Count = 0;
+            Percent = 0;
         }
         internal void ForceUpdate()
         {
             OnPropertyChanged(nameof(Count));
+            UpdatePercent();
         }
         public override string ToString()
         {
