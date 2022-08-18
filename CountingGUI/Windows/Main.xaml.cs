@@ -8,6 +8,7 @@ using CountingLibrary.Main;
 using System.ComponentModel;
 using CountingGUI.Controls;
 using System.Windows.Controls;
+using System;
 
 namespace CountingGUI.Windows
 {
@@ -16,14 +17,17 @@ namespace CountingGUI.Windows
         private bool IsWindowClosing { get; set; }
         private OneSymbol OneSymbolControl { get; set; } = new();
         private TwoSymbols TwoSymbolsControl { get; set; } = new();
+        private Word WordControl { get; set; } = new();
+
         public Main()
         {
             InitializeComponent();
             DataContext = Workspace.WorkspaceInstance;
             Grid.SetRow(OneSymbolControl, 2);
             Grid.SetRow(TwoSymbolsControl, 2);
+            Grid.SetRow(WordControl, 2);
             Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
-            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(Workspace.WorkspaceInstance.Settings.ProcessingTypes[Workspace.WorkspaceInstance.Settings.ProcessingType]));
+            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(Workspace.WorkspaceInstance.Settings.GetProcessingType()));
         }
 
         #region Non GUI
@@ -57,7 +61,7 @@ namespace CountingGUI.Windows
         {
             if (IsWindowClosing)
                 return;
-            switch (Workspace.WorkspaceInstance.Settings.ProcessingTypes[Workspace.WorkspaceInstance.Settings.ProcessingType])
+            switch (Workspace.WorkspaceInstance.Settings.GetProcessingType())
             {
                 case ProcessingType.OneSymbol:
                     OneSymbolControl.ReBindingSymbolsDataContext();
@@ -66,7 +70,6 @@ namespace CountingGUI.Windows
                     TwoSymbolsControl.SortList(sortEvent.Sort);
                     break;
                 case ProcessingType.Word:
-
                     break;
             }
         }
@@ -112,28 +115,36 @@ namespace CountingGUI.Windows
         {
             if (Workspace.WorkspaceInstance.IsRunning)
                 return;
-            CommonFileDialog commonFileDialog = new CommonOpenFileDialog
+            try
             {
-                Title = "Массив данных",
-                IsFolderPicker = true,
-                AddToMostRecentlyUsedList = false,
-                AllowNonFileSystemItems = false,
-                EnsureFileExists = true,
-                EnsurePathExists = true,
-                EnsureReadOnly = false,
-                EnsureValidNames = true,
-                Multiselect = false,
-                ShowPlacesList = true
-            };
-            if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                Sort oldSort = Workspace.WorkspaceInstance.Sort;
-                Workspace.WorkspaceInstance = new(commonFileDialog.FileName, Workspace.WorkspaceInstance.Settings);
-                DataContext = Workspace.WorkspaceInstance;
-                Workspace.WorkspaceInstance.SortBy(oldSort);
-                SystemInfoControl.DataContext = Workspace.WorkspaceInstance;               
-                OneSymbolControl.ReBindingSymbolsDataContext();
+                CommonFileDialog commonFileDialog = new CommonOpenFileDialog
+                {
+                    Title = "Массив данных",
+                    IsFolderPicker = true,
+                    AddToMostRecentlyUsedList = false,
+                    AllowNonFileSystemItems = false,
+                    EnsureFileExists = true,
+                    EnsurePathExists = true,
+                    EnsureReadOnly = false,
+                    EnsureValidNames = true,
+                    Multiselect = false,
+                    ShowPlacesList = true
+                };
+                if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    Sort oldSort = Workspace.WorkspaceInstance.Sort;
+                    Workspace.WorkspaceInstance = new(commonFileDialog.FileName, Workspace.WorkspaceInstance.Settings);
+                    DataContext = Workspace.WorkspaceInstance;
+                    Workspace.WorkspaceInstance.SortBy(oldSort);
+                    SystemInfoControl.DataContext = Workspace.WorkspaceInstance;
+                    if (Workspace.WorkspaceInstance.Settings.GetProcessingType() == ProcessingType.OneSymbol)
+                        OneSymbolControl.GenerateGrids();
+                }
             }
+            catch (Exception)
+            {
+
+            }           
         }
 
         #endregion
@@ -188,14 +199,24 @@ namespace CountingGUI.Windows
                     MainGrid.Children.Add(OneSymbolControl);
                     if (MainGrid.Children.Contains(TwoSymbolsControl))
                         MainGrid.Children.Remove(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(WordControl))
+                        MainGrid.Children.Remove(WordControl);
+                    OneSymbolControl.GenerateGrids();
                     break;
                 case ProcessingType.TwoSymbols:
                     MainGrid.Children.Add(TwoSymbolsControl);
                     if (MainGrid.Children.Contains(OneSymbolControl))
                         MainGrid.Children.Remove(OneSymbolControl);
+                    if (MainGrid.Children.Contains(WordControl))
+                        MainGrid.Children.Remove(WordControl);
+                    TwoSymbolsControl.ChangeSymboMainlInfoSymbolText("Пара");
                     break;
                 case ProcessingType.Word:
-
+                    MainGrid.Children.Add(WordControl);
+                    if (MainGrid.Children.Contains(OneSymbolControl))
+                        MainGrid.Children.Remove(OneSymbolControl);
+                    if (MainGrid.Children.Contains(TwoSymbolsControl))
+                        MainGrid.Children.Remove(TwoSymbolsControl);
                     break;
             }
         }

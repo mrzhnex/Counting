@@ -32,6 +32,13 @@
         <CheckBox x:Name="UpdateInRealTime" Grid.Row="3" Grid.Column="1" IsChecked="{Binding Settings.UpdateInRealTime}" VerticalAlignment="Center" HorizontalAlignment="Center" Checked="UpdateInRealTime_Checked" Unchecked="UpdateInRealTime_Checked"/>
 
         <TextBlock Text="Тип обработки" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="4"/>
-        <ComboBox x:Name="ProcessingType" Grid.Row="4" Grid.Column="1" SelectionChanged="ProcessingType_SelectionChanged"/>
+        <Grid x:Name="ProcessingTypeGrid" Grid.Row="4" Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="ProcessingType" SelectionChanged="ProcessingType_SelectionChanged" Grid.Column="0" Grid.ColumnSpan="2"/>
+            <TextBox x:Name="Word" Grid.Column="1" Text="sample text" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4" TextChanged="Word_TextChanged"/>
+        </Grid>
     </Grid>
 </Window>

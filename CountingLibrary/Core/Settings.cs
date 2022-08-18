@@ -2,8 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Xml.Serialization;
-using CountingLibrary.Events;
-using CountingLibrary.Handlers;
 
 namespace CountingLibrary.Core
 {
@@ -94,12 +92,26 @@ namespace CountingLibrary.Core
             { "Слово", Core.ProcessingType.Word }
         };
 
+        public string Word
+        {
+            get { return word; }
+            set
+            {
+                word = value;
+                OnPropertyChanged();
+            }
+        }
+        private string word = string.Empty;     
+
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
-
+        public ProcessingType GetProcessingType()
+        {
+            return ProcessingTypes[ProcessingType];
+        }
         public Settings() { }
     }
     public enum ProcessingType

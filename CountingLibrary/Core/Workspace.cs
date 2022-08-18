@@ -9,13 +9,14 @@ using CountingLibrary.Main;
 
 namespace CountingLibrary.Core
 {
-    public class Workspace : INotifyPropertyChanged, IEventHandlerChangeProcessingType
+    public class Workspace : INotifyPropertyChanged
     {
         private HardDriveManager HardDriveManager { get; set; }
         public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; private set; } = new();
         public ObservableCollection<SymbolInfo> SymbolInfos { get; private set; } = new();
-        public List<string> Symbols { get; private set; } = new();
+        public List<string> SymbolsOne { get; private set; } = new();
+        public List<string> SymbolsTwo { get; private set; } = new();
         private Stopwatch Stopwatch { get; set; } = new();
 
         private string timeSpent = Info.Default.InitialTime;
@@ -65,6 +66,16 @@ namespace CountingLibrary.Core
         public Sort Sort { get; private set; } = Sort.Default;
         private ulong TotalSymbolsCount { get; set; }
         private bool TimeLeftIsOver { get; set; }
+        public SymbolInfo SymbolInfo
+        {
+            get { return symbolInfo; }
+            set
+            {
+                symbolInfo = value;
+                OnPropertyChanged();
+            }
+        }
+        private SymbolInfo symbolInfo = new(string.Empty);
 
         public Workspace(string path)
         {
@@ -73,7 +84,6 @@ namespace CountingLibrary.Core
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
-            Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
         }
         public Workspace(string path, Settings settings)
         {
@@ -82,7 +92,6 @@ namespace CountingLibrary.Core
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
-            Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
         }
 
         #region Settings
@@ -93,28 +102,29 @@ namespace CountingLibrary.Core
         public void SortBy(Sort sort)
         {
             Sort = sort;
-            switch (Sort)
+            if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
             {
-                case Sort.Alphabet:
-                    SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Symbol));
-                    break;
-                case Sort.Count:
-                    SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Count).Reverse());
-                    break;
-                case Sort.Default:
-                    SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => Symbols.IndexOf(x.Symbol)));
-                    break;
-                default:
-                    break;
+                switch (Sort)
+                {
+                    case Sort.Alphabet:
+                        SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Symbol));
+                        break;
+                    case Sort.Count:
+                        SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Count).Reverse());
+                        break;
+                    case Sort.Default:
+                        SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => SymbolsOne.IndexOf(x.Symbol)));
+                        break;
+                    default:
+                        break;
+                }
             }
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent(Sort));
         }
-        public void OnChangeProcessingType(ChangeProcessingTypeEvent changeProcessingTypeEvent)
+        public void ChangeProcessingType()
         {
-            ResetOldData();
-            ResetSymbols();
-            PrepareSymbols();
-            PrepareSymbolInfos();
+            FullReset();
+            Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(WorkspaceInstance.Settings.GetProcessingType()));
         }
         #endregion
 
@@ -144,6 +154,8 @@ namespace CountingLibrary.Core
         private void Scan()
         {
             double seconds = 0;
+            string word = string.Empty;
+            char oldC = '\n';
             foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
             {
                 if (!IsRunning)
@@ -152,8 +164,7 @@ namespace CountingLibrary.Core
                 {
                     if (!IsRunning)
                         break;
-
-                    switch (Settings.ProcessingTypes[Settings.ProcessingType])
+                    switch (Settings.GetProcessingType())
                     {
                         case ProcessingType.OneSymbol:
                             foreach (char c in keyValuePair.Value[i])
@@ -190,39 +201,75 @@ namespace CountingLibrary.Core
                             }
                             break;
                         case ProcessingType.TwoSymbols:
-                            foreach (SymbolInfo symbolInfo in SymbolInfos)
+                            foreach (char c in keyValuePair.Value[i])
                             {
-                                int count = 0;
-                                try
+                                ManualResetEvent.WaitOne();
+
+                                if (!IsRunning)
+                                    break;
+                                word = string.Concat(oldC, c).ToLower();
+                                
+                                if (SymbolInfos.Any(x => x.Symbol == word))
                                 {
-                                    count = new Regex(symbolInfo.Symbol).Matches(keyValuePair.Value[i]).Count;
+                                    SymbolsCount++;
+                                    SymbolInfos.First(x => x.Symbol == word).AddCount();
+                                    if (Settings.UpdateInRealTime)
+                                    {
+                                        foreach (SymbolInfo symbolInfo in SymbolInfos)
+                                        {
+                                            symbolInfo.UpdatePercent();
+                                        }
+                                    }
                                 }
-                                catch (RegexParseException) { }
-                                if (count > 0)
+                                else
                                 {
-                                    symbolInfo.AddCount(count);
-                                    SymbolsCount += (ulong)count;
+                                    WrongSymbolsCount++;
                                 }
+                                oldC = c;
                                 TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
                                 if (!TimeLeftIsOver)
                                     TimeLeft = CalculateTimeLeft();
                                 if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
                                 {
-                                    seconds = Stopwatch.Elapsed.TotalSeconds + 1.5d;
+                                    seconds = Stopwatch.Elapsed.TotalSeconds + 2.5d;
                                     SortBy(Sort);
                                 }
                             }
                             break;
                         case ProcessingType.Word:
+                            foreach (char c in keyValuePair.Value[i])
+                            {
+                                ManualResetEvent.WaitOne();
 
+                                if (!IsRunning)
+                                    break;
+                                word = string.Concat(word, c).ToLower();
+                                if (word.Length > SymbolInfo.Symbol.Length)
+                                    word = word.Remove(0);
+
+                                if (SymbolInfo.Symbol == word)
+                                {
+                                    SymbolsCount++;
+                                    SymbolInfo.AddCount();
+                                }
+                                else
+                                {
+                                    WrongSymbolsCount++;
+                                }
+                                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
+                                if (!TimeLeftIsOver)
+                                    TimeLeft = CalculateTimeLeft();
+                            }
                             break;
                     }
                     
-                    
-                    if (i != keyValuePair.Value.Count - 1)
+                    if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
                     {
-                        SymbolsCount++;
-                        SymbolInfos.First(x => x.Symbol == "\n").AddCount();
+                        if (i != keyValuePair.Value.Count - 1)
+                        {
+                            SymbolsCount++;
+                            SymbolInfos.First(x => x.Symbol == "\n").AddCount();
+                        }
                     }
                 }
             }
@@ -230,6 +277,7 @@ namespace CountingLibrary.Core
             {
                 symbolInfo.ForceUpdate();
             }
+            SymbolInfo.ForceUpdate();
             SortBy(Sort);
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent(Sort));
             ManualResetEvent.Reset();
@@ -257,6 +305,9 @@ namespace CountingLibrary.Core
             Stopwatch.Start();
             IsRunning = true;
             ManualResetEvent.Set();
+            TimeSpent = Info.Default.InitialTime;
+            TimeLeft = Info.Default.InitialTime;
+            TimeLeftIsOver = false;
             ResetOldData();
             PrepareScan();
             Scan();
@@ -279,6 +330,12 @@ namespace CountingLibrary.Core
         #endregion
 
         #region Helper
+        public void FullReset()
+        {
+            ResetOldData();
+            SymbolInfos.Clear();
+            PrepareSymbolInfos();
+        }
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
@@ -291,6 +348,7 @@ namespace CountingLibrary.Core
             {
                 SymbolInfos[i].ResetCount();
             }
+            SymbolInfo = new(Settings.Word);
         }
         private void ResetSystemData()
         {
@@ -299,67 +357,76 @@ namespace CountingLibrary.Core
             SymbolsCount = 0;
             WrongSymbolsCount = 0;
         }
-        private void ResetSymbols()
-        {
-            Symbols.Clear();
-            SymbolInfos.Clear();
-        }
         private void PrepareSymbols()
         {
-            switch (Settings.ProcessingTypes[Settings.ProcessingType])
+            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
             {
-                case ProcessingType.OneSymbol:
-                    for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
-                    {
-                        Symbols.Add(Info.Default.Alphabet.Letters[i].ToString());
-                    }
-                    for (int i = 0; i < 2; i++)
-                    {
-                        Symbols.Add(Info.Default.Symbols[i].ToString());
-                    }
-                    for (int i = 0; i < Info.Default.Numbers.Length; i++)
-                    {
-                        Symbols.Add(Info.Default.Numbers[i].ToString());
-                    }
-                    for (int i = 2; i < Info.Default.Symbols.Length; i++)
-                    {
-                        Symbols.Add(Info.Default.Symbols[i].ToString());
-                    }
-                    break;
-                case ProcessingType.TwoSymbols:
-                    List<string> symbols = new();
-                    for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
-                    {
-                        symbols.Add(Info.Default.Alphabet.Letters[i].ToString());
-                    }
-                    for (int i = 2; i < 9; i++)
-                    {
-                        symbols.Add(Info.Default.Symbols[i].ToString());
-                    }
-                    Symbols.Add("\n");
-                    foreach (string s in symbols)
-                    {
-                        foreach (string s2 in symbols)
-                        {
-                            Symbols.Add(s + s2);
-                        }
-                    }
-                    break;
-                case ProcessingType.Word:
-                    break;
+                SymbolsOne.Add(Info.Default.Alphabet.Letters[i].ToString());
             }
+            for (int i = 0; i < 2; i++)
+            {
+                SymbolsOne.Add(Info.Default.Symbols[i].ToString());
+            }
+            for (int i = 0; i < Info.Default.Numbers.Length; i++)
+            {
+                SymbolsOne.Add(Info.Default.Numbers[i].ToString());
+            }
+            for (int i = 2; i < Info.Default.Symbols.Length; i++)
+            {
+                SymbolsOne.Add(Info.Default.Symbols[i].ToString());
+            }
+
+            List<string> symbols = new();
+            for (int i = 0; i < Info.Default.Alphabet.Letters.Length; i++)
+            {
+                symbols.Add(Info.Default.Alphabet.Letters[i].ToString());
+            }
+            for (int i = 2; i < 9; i++)
+            {
+                symbols.Add(Info.Default.Symbols[i].ToString());
+            }
+            foreach (string s in symbols)
+            {
+                foreach (string s2 in symbols)
+                {
+                    SymbolsTwo.Add(s + s2);
+                }
+            }
+            
+            SymbolInfo = new(Settings.Word);
         }
         private void PrepareSymbolInfos()
         {
-            for (int i = 0; i < Symbols.Count; i++)
+            switch (Settings.GetProcessingType())
             {
-                SymbolInfos.Add(new(Symbols[i]));
+                case ProcessingType.OneSymbol:
+                    for (int i = 0; i < SymbolsOne.Count; i++)
+                    {
+                        SymbolInfos.Add(new(SymbolsOne[i]));
+                    }
+                    break;
+                case ProcessingType.TwoSymbols:
+                    for (int i = 0; i < SymbolsTwo.Count; i++)
+                    {
+                        SymbolInfos.Add(new(SymbolsTwo[i]));
+                    }
+                    break;
+                case ProcessingType.Word:
+                    SymbolInfo = new(Settings.Word);
+                    break;
             }
         }
         private string CalculateTimeLeft()
         {
             ulong processedSymbolsCount = SymbolsCount + WrongSymbolsCount;
             double averageTimePerSymbol = Stopwatch.Elapsed.TotalSeconds / processedSymbolsCount;
+
+            switch (Settings.GetProcessingType())
+            {
+                case ProcessingType.TwoSymbols:
+                    processedSymbolsCount = (SymbolsCount * 2) + WrongSymbolsCount;
+                    break;
+            }
             try
             {
                 return TimeSpan.FromSeconds(averageTimePerSymbol * (TotalSymbolsCount - processedSymbolsCount)).ToString(Info.Default.TimeParseString);
@@ -367,8 +434,8 @@ namespace CountingLibrary.Core
             catch (OverflowException)
             {
                 TimeLeftIsOver = true;
-                return Info.Default.InitialTime;
             }
+            return Info.Default.InitialTime;
         }
         #endregion
     }

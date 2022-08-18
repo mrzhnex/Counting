@@ -12,19 +12,20 @@ namespace CountingGUI.Controls
         {
             InitializeComponent();
             DataContext = Workspace.WorkspaceInstance;
-            GenerateGrids();
         }
 
-        private void GenerateGrids()
+        public void GenerateGrids()
         {
-            for (int i = 0; i < Workspace.WorkspaceInstance.Symbols.Count; i++)
+            RemoveOldGrids();
+            for (int i = 0; i < Workspace.WorkspaceInstance.SymbolsOne.Count; i++)
             {
-                CreateObject(Workspace.WorkspaceInstance.Symbols[i], i, (int)Math.Ceiling(Workspace.WorkspaceInstance.Symbols.Count / 2.0));
+                CreateObject(Workspace.WorkspaceInstance.SymbolsOne[i], i, (int)Math.Ceiling(Workspace.WorkspaceInstance.SymbolsOne.Count / 2.0));
             }
         }
         private void CreateObject(string symbol, int index, int rowsCount)
         {
-            SymbolInfo symbolInfo = new(symbol);
+            SymbolInfo symbolInfo = new();
+            symbolInfo.BindingDataContext(symbol);
 
             if (index < rowsCount)
             {
@@ -46,6 +47,23 @@ namespace CountingGUI.Controls
             {
                 Dispatcher.Invoke(() => SymbolInfos[i].DataContext = Workspace.WorkspaceInstance.SymbolInfos[i]);
             }
+        }
+        private void RemoveOldGrids()
+        {
+            foreach (SymbolInfo symbolInfo in SymbolInfos)
+            {
+                if (DynamicGridOne.Children.Contains(symbolInfo))
+                {
+                    DynamicGridOne.Children.Remove(symbolInfo);
+                    DynamicGridOne.RowDefinitions.RemoveAt(DynamicGridOne.RowDefinitions.Count - 1);
+                }
+                if (DynamicGridTwo.Children.Contains(symbolInfo))
+                {
+                    DynamicGridTwo.Children.Remove(symbolInfo);
+                    DynamicGridTwo.RowDefinitions.RemoveAt(DynamicGridTwo.RowDefinitions.Count - 1);
+                }
+            }
+            SymbolInfos.Clear();
         }
     }
 }

@@ -7,7 +7,12 @@
              mc:Ignorable="d" 
              d:DesignHeight="400" d:DesignWidth="400">
     <Grid>
-        <ListBox x:Name="SymbolInfosList" Grid.Column="3" ItemsSource="{Binding SymbolInfos}" HorizontalContentAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.1*"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Controls:SymbolMainInfo x:Name="SymbolMainInfoControl" Grid.Row="0"/>
+        <ListBox x:Name="SymbolInfosList" Grid.Row="1" ItemsSource="{Binding SymbolInfos}" HorizontalContentAlignment="Stretch" VirtualizingPanel.IsContainerVirtualizable="True" VirtualizingStackPanel.IsVirtualizing="True">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Controls:SymbolInfo/>

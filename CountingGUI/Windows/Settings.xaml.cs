@@ -40,7 +40,25 @@ namespace CountingGUI.Windows
             SolidColorBrushComboBox.SelectedValue = Workspace.WorkspaceInstance.Settings.Scheme;
             ProcessingType.SelectedValue = Workspace.WorkspaceInstance.Settings.ProcessingType;
             if (Workspace.WorkspaceInstance.IsRunning)
+            {
+                Word.IsEnabled = false;
                 ProcessingType.IsEnabled = false;
+            }
+            UpdateWordTextBox();
+        }
+        private void UpdateWordTextBox()
+        {
+            if (Workspace.WorkspaceInstance.Settings.GetProcessingType() == CountingLibrary.Core.ProcessingType.Word)
+            {
+                Word.Visibility = Visibility.Visible;
+                Word.Text = Workspace.WorkspaceInstance.Settings.Word;
+                Grid.SetColumnSpan(ProcessingType, 1);
+            }
+            else
+            {
+                Word.Visibility = Visibility.Hidden;
+                Grid.SetColumnSpan(ProcessingType, 2);
+            }
         }
 
         private void FontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -65,7 +83,17 @@ namespace CountingGUI.Windows
             if (IsLoaded)
             {
                 Workspace.WorkspaceInstance.Settings.ProcessingType = (string)((ComboBox)sender).SelectedValue;
-                Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(Workspace.WorkspaceInstance.Settings.ProcessingTypes[Workspace.WorkspaceInstance.Settings.ProcessingType]));
+                Workspace.WorkspaceInstance.ChangeProcessingType();
+                UpdateWordTextBox();
+            }
+        }
+
+        private void Word_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (IsLoaded)
+            {
+                Workspace.WorkspaceInstance.Settings.Word = ((TextBox)sender).Text;
+                Workspace.WorkspaceInstance.FullReset();
             }
         }
     }

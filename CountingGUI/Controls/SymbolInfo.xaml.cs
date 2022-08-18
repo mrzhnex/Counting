@@ -6,14 +6,13 @@ namespace CountingGUI.Controls
 {
     public partial class SymbolInfo : UserControl
     {
-        public SymbolInfo(string info)
-        {
-            InitializeComponent();
-            DataContext = Workspace.WorkspaceInstance.SymbolInfos.First(x => x.Symbol == info);
-        }
         public SymbolInfo()
         {
             InitializeComponent();
+        }
+        public void BindingDataContext(string info)
+        {
+            DataContext = Workspace.WorkspaceInstance.SymbolInfos.First(x => x.Symbol == info);
         }
     }
 }

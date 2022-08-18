@@ -7,7 +7,6 @@ namespace CountingLibrary.Core
     {
         public string Symbol { get; private set; }
         public string SymbolView { get; private set; }
-
         private int count;
         public int Count
         {
@@ -33,7 +32,7 @@ namespace CountingLibrary.Core
             }
         }
 
-        internal SymbolInfo(string symbol)
+        public SymbolInfo(string symbol)
         {
             Symbol = symbol;
             SymbolView = symbol.ToString();
@@ -48,7 +47,7 @@ namespace CountingLibrary.Core
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
-        public void UpdatePercent()
+        internal void UpdatePercent()
         {
             if (Count == 0)
             {

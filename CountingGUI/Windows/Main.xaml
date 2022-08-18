@@ -31,7 +31,6 @@
                         <MenuItem x:Name="Help" Header="Справка" Click="Help_Click"/>
                     </Menu>
                     <Controls:SystemInfo x:Name="SystemInfoControl" Grid.Row="1" HorizontalAlignment="Left"/>
-                    
                 </Grid>
             </Border>
         </Grid>

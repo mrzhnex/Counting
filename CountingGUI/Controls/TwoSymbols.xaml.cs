@@ -26,5 +26,9 @@ namespace CountingGUI.Controls
                     break;
             }
         }
+        public void ChangeSymboMainlInfoSymbolText(string text)
+        {
+            SymbolMainInfoControl.Symbol.Text = text;
+        }
     }
 }
