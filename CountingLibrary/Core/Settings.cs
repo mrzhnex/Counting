@@ -101,7 +101,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-        private string word = string.Empty;     
+        private string word = "Слово";     
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")

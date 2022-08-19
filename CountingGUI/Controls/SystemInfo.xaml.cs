@@ -28,7 +28,7 @@ namespace CountingGUI.Controls
                     break;
                 case ProcessingType.Word:
                     ProcessedSymbolsCount.Text = "Обработанных слов";
-                    WrongSymbolsCount.Text = "Необработанных слов";
+                    WrongSymbolsCount.Text = "Необработанных знаков";
                     break;
             }
         }

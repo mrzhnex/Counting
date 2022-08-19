@@ -102,22 +102,25 @@ namespace CountingLibrary.Core
         public void SortBy(Sort sort)
         {
             Sort = sort;
-            if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
+            switch (Settings.GetProcessingType())
             {
-                switch (Sort)
-                {
-                    case Sort.Alphabet:
-                        SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Symbol));
-                        break;
-                    case Sort.Count:
-                        SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Count).Reverse());
-                        break;
-                    case Sort.Default:
-                        SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => SymbolsOne.IndexOf(x.Symbol)));
-                        break;
-                    default:
-                        break;
-                }
+                case ProcessingType.OneSymbol:
+                case ProcessingType.TwoSymbols:
+                    switch (Sort)
+                    {
+                        case Sort.Alphabet:
+                            SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Symbol));
+                            break;
+                        case Sort.Count:
+                            SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => x.Count).Reverse());
+                            break;
+                        case Sort.Default:
+                            SymbolInfos = new ObservableCollection<SymbolInfo>(SymbolInfos.OrderBy(x => SymbolsOne.IndexOf(x.Symbol)));
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
             }
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerSort>(new SortEvent(Sort));
         }
@@ -340,6 +343,10 @@ namespace CountingLibrary.Core
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        }
+        public void Save(string fileName)
+        {
+            HardDriveManager.SaveResult(fileName, Settings.FontFamily, Settings.FontSize, Settings.GetProcessingType());
         }
         private void ResetOldData()
         {

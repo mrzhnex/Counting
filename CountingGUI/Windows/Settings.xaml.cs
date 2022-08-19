@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using CountingLibrary.Core;
-using CountingLibrary.Events;
-using CountingLibrary.Handlers;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace CountingGUI.Windows
 {
@@ -43,6 +43,7 @@ namespace CountingGUI.Windows
             {
                 Word.IsEnabled = false;
                 ProcessingType.IsEnabled = false;
+                SaveInPDF.IsEnabled = false;
             }
             UpdateWordTextBox();
         }
@@ -87,13 +88,39 @@ namespace CountingGUI.Windows
                 UpdateWordTextBox();
             }
         }
-
         private void Word_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (IsLoaded)
             {
                 Workspace.WorkspaceInstance.Settings.Word = ((TextBox)sender).Text;
                 Workspace.WorkspaceInstance.FullReset();
+            }
+        }
+        private void SaveInPDF_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                CommonFileDialog commonFileDialog = new CommonOpenFileDialog
+                {
+                    Title = "Сохранить результат в PDF",
+                    IsFolderPicker = false,
+                    AddToMostRecentlyUsedList = false,
+                    AllowNonFileSystemItems = false,
+                    EnsureFileExists = false,
+                    EnsurePathExists = true,
+                    EnsureReadOnly = false,
+                    EnsureValidNames = true,
+                    Multiselect = false,
+                    ShowPlacesList = true
+                };
+                if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    Workspace.WorkspaceInstance.Save(commonFileDialog.FileName);
+                }
+            }
+            catch (Exception)
+            {
+
             }
         }
     }

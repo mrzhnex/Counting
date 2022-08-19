@@ -34,10 +34,12 @@ namespace CountingGUI.Windows
         private void DisablePauseButton(Thread thread)
         {
             Dispatcher.Invoke(() => Pause.IsEnabled = true);
+            Dispatcher.Invoke(() => SelectWorkspace.IsEnabled = false);
             thread.Join();
             if (!IsWindowClosing)
             {
                 Dispatcher.Invoke(() => Pause.IsEnabled = false);
+                Dispatcher.Invoke(() => SelectWorkspace.IsEnabled = true);
                 Dispatcher.Invoke(() => Pause.Header = "Приостановить");
                 Dispatcher.Invoke(() => Start.Header = "Обработка");
             }
@@ -73,7 +75,35 @@ namespace CountingGUI.Windows
                     break;
             }
         }
-        
+        public void OnChangeProcessingType(ChangeProcessingTypeEvent changeProcessingTypeEvent)
+        {
+            switch (changeProcessingTypeEvent.ProcessingType)
+            {
+                case ProcessingType.OneSymbol:
+                    MainGrid.Children.Add(OneSymbolControl);
+                    if (MainGrid.Children.Contains(TwoSymbolsControl))
+                        MainGrid.Children.Remove(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(WordControl))
+                        MainGrid.Children.Remove(WordControl);
+                    OneSymbolControl.GenerateGrids();
+                    break;
+                case ProcessingType.TwoSymbols:
+                    MainGrid.Children.Add(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(OneSymbolControl))
+                        MainGrid.Children.Remove(OneSymbolControl);
+                    if (MainGrid.Children.Contains(WordControl))
+                        MainGrid.Children.Remove(WordControl);
+                    TwoSymbolsControl.ChangeSymboMainlInfoSymbolText("Пара");
+                    break;
+                case ProcessingType.Word:
+                    MainGrid.Children.Add(WordControl);
+                    if (MainGrid.Children.Contains(OneSymbolControl))
+                        MainGrid.Children.Remove(OneSymbolControl);
+                    if (MainGrid.Children.Contains(TwoSymbolsControl))
+                        MainGrid.Children.Remove(TwoSymbolsControl);
+                    break;
+            }
+        }
         #endregion
 
         #region Click
@@ -144,7 +174,7 @@ namespace CountingGUI.Windows
             catch (Exception)
             {
 
-            }           
+            }
         }
 
         #endregion
@@ -189,36 +219,6 @@ namespace CountingGUI.Windows
             Workspace.WorkspaceInstance.SaveSettings();
             if (Workspace.WorkspaceInstance.IsRunning)
                 Workspace.WorkspaceInstance.Stop();
-        }
-
-        public void OnChangeProcessingType(ChangeProcessingTypeEvent changeProcessingTypeEvent)
-        {
-            switch (changeProcessingTypeEvent.ProcessingType)
-            {
-                case ProcessingType.OneSymbol:
-                    MainGrid.Children.Add(OneSymbolControl);
-                    if (MainGrid.Children.Contains(TwoSymbolsControl))
-                        MainGrid.Children.Remove(TwoSymbolsControl);
-                    if (MainGrid.Children.Contains(WordControl))
-                        MainGrid.Children.Remove(WordControl);
-                    OneSymbolControl.GenerateGrids();
-                    break;
-                case ProcessingType.TwoSymbols:
-                    MainGrid.Children.Add(TwoSymbolsControl);
-                    if (MainGrid.Children.Contains(OneSymbolControl))
-                        MainGrid.Children.Remove(OneSymbolControl);
-                    if (MainGrid.Children.Contains(WordControl))
-                        MainGrid.Children.Remove(WordControl);
-                    TwoSymbolsControl.ChangeSymboMainlInfoSymbolText("Пара");
-                    break;
-                case ProcessingType.Word:
-                    MainGrid.Children.Add(WordControl);
-                    if (MainGrid.Children.Contains(OneSymbolControl))
-                        MainGrid.Children.Remove(OneSymbolControl);
-                    if (MainGrid.Children.Contains(TwoSymbolsControl))
-                        MainGrid.Children.Remove(TwoSymbolsControl);
-                    break;
-            }
         }
     }
 }
