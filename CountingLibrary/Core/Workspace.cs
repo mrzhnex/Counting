@@ -2,10 +2,11 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using CountingLibrary.Events;
 using CountingLibrary.Handlers;
 using CountingLibrary.Main;
+using DocumentFormat.OpenXml.Packaging;
+using Microsoft.Office.Interop.Word;
 
 namespace CountingLibrary.Core
 {
@@ -139,7 +140,18 @@ namespace CountingLibrary.Core
             {
                 try
                 {
-                    FileInfos.Add(fullFileName, File.ReadAllLines(fullFileName).ToList());
+                    if (IsMicrosoftOfficeNormalFile(fullFileName))
+                    {
+                        WordprocessingDocument wordprocessingDocument = WordprocessingDocument.Open(fullFileName, false);
+                        FileInfos.Add(fullFileName, new List<string>() { wordprocessingDocument.MainDocumentPart.Document.Body.InnerText });                      
+                    }
+                    else if (IsMicrosoftOfficeFile(fullFileName))
+                    {
+                        Document document = new Application().Documents.Open(fullFileName, ReadOnly: true);
+                        FileInfos.Add(fullFileName, new List<string>() { document.Content.Text });                       
+                    }
+                    else
+                        FileInfos.Add(fullFileName, File.ReadAllLines(fullFileName).ToList());
                 }
                 catch (IOException)
                 {
@@ -443,6 +455,14 @@ namespace CountingLibrary.Core
                 TimeLeftIsOver = true;
             }
             return Info.Default.InitialTime;
+        }
+        private bool IsMicrosoftOfficeFile(string fileName)
+        {
+            return new string[] { ".doc", ".docs", ".odt" }.Contains(Path.GetExtension(fileName).ToLower());
+        }
+        private bool IsMicrosoftOfficeNormalFile(string fileName)
+        {
+            return new string[] { ".docx" }.Contains(Path.GetExtension(fileName).ToLower());
         }
         #endregion
     }
