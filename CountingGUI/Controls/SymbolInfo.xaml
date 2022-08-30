@@ -8,11 +8,11 @@
     <Border BorderBrush="Black" BorderThickness="0,1,0,0">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.4*"/>
+                <ColumnDefinition Width="0.5*"/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="0" Background="LightGray">
+            <Border BorderBrush="Black" BorderThickness="1,0,1,0" Grid.Column="0" Background="LightGray">
                 <TextBlock x:Name="Symbol" Text="{Binding Path=SymbolView}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
             </Border>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="1">

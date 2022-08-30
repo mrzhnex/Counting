@@ -8,11 +8,11 @@
     <Border BorderBrush="Black" BorderThickness="0,1,0,0">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.4*"/>
+                <ColumnDefinition Width="0.5*"/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="0" Background="{Binding Settings.SolidColorBrush}">
+            <Border BorderBrush="Black" BorderThickness="1,0,1,0" Grid.Column="0" Background="{Binding Settings.SolidColorBrush}">
                 <TextBlock x:Name="Symbol" Text="Знак" TextAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="1" Background="{Binding Settings.SolidColorBrush}">

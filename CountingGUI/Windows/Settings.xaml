@@ -6,6 +6,7 @@
         mc:Ignorable="d"
         FontSize="{Binding Settings.FontSize}"
         FontFamily="{Binding Settings.FontFamily}"
+        WindowStartupLocation="CenterOwner"
         Title="Настройки" Height="200" Width="400">
     <Grid>
         <Grid.RowDefinitions>

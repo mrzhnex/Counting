@@ -63,7 +63,7 @@ namespace CountingLibrary.Core
 
         public ManualResetEvent ManualResetEvent { get; private set; } = new(false);
         public bool IsRunning { get; private set; } = false;
-        public static Workspace WorkspaceInstance { get; set; } = new(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        public static Workspace WorkspaceInstance { get; set; } = new();
         public Sort Sort { get; private set; } = Sort.Default;
         private ulong TotalSymbolsCount { get; set; }
         private bool TimeLeftIsOver { get; set; }
@@ -78,17 +78,25 @@ namespace CountingLibrary.Core
         }
         private SymbolInfo symbolInfo = new(string.Empty);
 
-        public Workspace(string path)
+        private Workspace()
         {
-            HardDriveManager = new(new(path));
+            HardDriveManager = new(Array.Empty<string>());
             Settings = HardDriveManager.LoadSettings(out _);
             PrepareSymbols();
             PrepareSymbolInfos();
             WorkspaceInstance = this;
         }
-        public Workspace(string path, Settings settings)
+        public Workspace(string folder, Settings settings)
         {
-            HardDriveManager = new(new(path));
+            HardDriveManager = new(new DirectoryInfo(folder));
+            Settings = settings;
+            PrepareSymbols();
+            PrepareSymbolInfos();
+            WorkspaceInstance = this;
+        }
+        public Workspace(string[] files, Settings settings)
+        {
+            HardDriveManager = new(files);
             Settings = settings;
             PrepareSymbols();
             PrepareSymbolInfos();
@@ -136,19 +144,29 @@ namespace CountingLibrary.Core
         public void FastScan()
         {
             FileInfos.Clear();
-            foreach (string fullFileName in HardDriveManager.GetFiles())
+            foreach (string fullFileName in HardDriveManager.Files)
             {
                 try
                 {
                     if (IsMicrosoftOfficeNormalFile(fullFileName))
                     {
                         WordprocessingDocument wordprocessingDocument = WordprocessingDocument.Open(fullFileName, false);
-                        FileInfos.Add(fullFileName, new List<string>() { wordprocessingDocument.MainDocumentPart.Document.Body.InnerText });                      
+                        FileInfos.Add(fullFileName, new List<string>() { wordprocessingDocument.MainDocumentPart.Document.Body.InnerText });
+                        if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
+                        {
+                            SymbolsCount += (ulong)wordprocessingDocument.MainDocumentPart.Document.Body.ChildElements.Count;
+                            SymbolInfos.First(x => x.Symbol == "\n").AddCount(wordprocessingDocument.MainDocumentPart.Document.Body.ChildElements.Count);
+                        }
                     }
                     else if (IsMicrosoftOfficeFile(fullFileName))
                     {
                         Document document = new Application().Documents.Open(fullFileName, ReadOnly: true);
-                        FileInfos.Add(fullFileName, new List<string>() { document.Content.Text });                       
+                        FileInfos.Add(fullFileName, new List<string>() { document.Content.Text });
+                        if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
+                        {
+                            SymbolsCount += (ulong)document.Content.Paragraphs.Count;
+                            SymbolInfos.First(x => x.Symbol == "\n").AddCount(document.Content.Paragraphs.Count - 1 < 0 ? 0 : document.Content.Paragraphs.Count - 1);
+                        }
                     }
                     else
                         FileInfos.Add(fullFileName, File.ReadAllLines(fullFileName).ToList());
@@ -260,7 +278,7 @@ namespace CountingLibrary.Core
                                     break;
                                 word = string.Concat(word, c).ToLower();
                                 if (word.Length > SymbolInfo.Symbol.Length)
-                                    word = word.Remove(0);
+                                    word = word.Remove(0, 1);
 
                                 if (SymbolInfo.Symbol == word)
                                 {
@@ -271,6 +289,9 @@ namespace CountingLibrary.Core
                                 {
                                     WrongSymbolsCount++;
                                 }
+
+
+
                                 TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
                                 if (!TimeLeftIsOver)
                                     TimeLeft = CalculateTimeLeft();
@@ -360,6 +381,10 @@ namespace CountingLibrary.Core
         {
             HardDriveManager.SaveResult(fileName, Settings.FontFamily, Settings.FontSize, Settings.GetProcessingType());
         }
+        public bool IsPaused()
+        {
+            return IsRunning && !Stopwatch.IsRunning;
+        }
         private void ResetOldData()
         {
             ResetSystemData();
@@ -382,7 +407,7 @@ namespace CountingLibrary.Core
             {
                 SymbolsOne.Add(Info.Default.Alphabet.Letters[i].ToString());
             }
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 3; i++)
             {
                 SymbolsOne.Add(Info.Default.Symbols[i].ToString());
             }
@@ -390,7 +415,7 @@ namespace CountingLibrary.Core
             {
                 SymbolsOne.Add(Info.Default.Numbers[i].ToString());
             }
-            for (int i = 2; i < Info.Default.Symbols.Length; i++)
+            for (int i = 3; i < Info.Default.Symbols.Length; i++)
             {
                 SymbolsOne.Add(Info.Default.Symbols[i].ToString());
             }
@@ -458,7 +483,7 @@ namespace CountingLibrary.Core
         }
         private bool IsMicrosoftOfficeFile(string fileName)
         {
-            return new string[] { ".doc", ".docs", ".odt" }.Contains(Path.GetExtension(fileName).ToLower());
+            return new string[] { ".doc", ".docs", ".odt", ".rtf" }.Contains(Path.GetExtension(fileName).ToLower());
         }
         private bool IsMicrosoftOfficeNormalFile(string fileName)
         {

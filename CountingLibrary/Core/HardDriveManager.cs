@@ -8,14 +8,19 @@ namespace CountingLibrary.Core
 {
     internal class HardDriveManager
     {
-        private DirectoryInfo DirectoryInfo { get; set; }
+        internal string[] Files { get; set; } = Array.Empty<string>();
         private XmlSerializer XmlSerializer { get; set; } = new(typeof(Settings));
         private PdfDocument PdfDocument { get; set; } = new();
 
         internal HardDriveManager(DirectoryInfo directoryInfo)
         {
-            DirectoryInfo = directoryInfo;
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Files = GetFiles(directoryInfo);
+        }
+        internal HardDriveManager(string[] files)
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Files = files;
         }
 
         internal void SaveResult(string fileName, string fontFamily, int fontSize, ProcessingType processingType)
@@ -110,11 +115,11 @@ namespace CountingLibrary.Core
                 }
             }
         }
-        internal string[] GetFiles()
+        private string[] GetFiles(DirectoryInfo directoryInfo)
         {
             try
             {
-                return Directory.GetFiles(DirectoryInfo.FullName, "*.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true }).Where(x => Info.Default.FileExtensions.Contains(Path.GetExtension(x).ToLower())).Select(x => x).ToArray();
+                return Directory.GetFiles(directoryInfo.FullName, "*.*", new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true }).Where(x => Info.Default.FileExtensions.Contains(Path.GetExtension(x).ToLower())).Select(x => x).ToArray();
             }
             catch (Exception)
             {

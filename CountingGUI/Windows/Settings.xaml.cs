@@ -45,6 +45,10 @@ namespace CountingGUI.Windows
                 ProcessingType.IsEnabled = false;
                 SaveInPDF.IsEnabled = false;
             }
+            if (Workspace.WorkspaceInstance.IsPaused())
+            {
+                SaveInPDF.IsEnabled = true;
+            }
             UpdateWordTextBox();
         }
         private void UpdateWordTextBox()
@@ -115,7 +119,7 @@ namespace CountingGUI.Windows
                 };
                 if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
-                    Workspace.WorkspaceInstance.Save(commonFileDialog.FileName);
+                    Workspace.WorkspaceInstance.Save(commonFileDialog.FileName + ".pdf");
                 }
             }
             catch (Exception)

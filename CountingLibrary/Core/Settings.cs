@@ -38,11 +38,13 @@ namespace CountingLibrary.Core
             set
             {
                 scheme = value;
+                if (!Schemes.ContainsKey(scheme))
+                    scheme = "Серый";
                 SolidColorBrush = Schemes[scheme];
                 OnPropertyChanged();
             }
         }
-        private string scheme = "Стандартный";
+        private string scheme = "Серый";
         public bool UpdateInRealTime
         {
             get { return updateInRealTime; }
@@ -64,14 +66,15 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-        private SolidColorBrush solidColorBrush = new(Colors.RoyalBlue);
+        private SolidColorBrush solidColorBrush = new(Colors.DarkGray);
 
         [XmlIgnore]
         public Dictionary<string, SolidColorBrush> Schemes { get; private set; } = new()
         {
-            { "Стандартный", new SolidColorBrush(Colors.RoyalBlue) },
             { "Серый", new SolidColorBrush(Colors.DarkGray) },
-            { "Зелено-голубой", new SolidColorBrush(Colors.CadetBlue)}
+            { "Синий", new SolidColorBrush(Colors.RoyalBlue) },
+            { "Зелено-голубой", new SolidColorBrush(Colors.CadetBlue)},
+            { "Розовый", new SolidColorBrush(Colors.Pink) }
         };
 
         public string ProcessingType
@@ -88,7 +91,7 @@ namespace CountingLibrary.Core
         public Dictionary<string, ProcessingType> ProcessingTypes { get; private set; } = new()
         {
             { "Знак", Core.ProcessingType.OneSymbol },
-            { "2 Знака", Core.ProcessingType.TwoSymbols },
+            { "Два знака", Core.ProcessingType.TwoSymbols },
             { "Слово", Core.ProcessingType.Word }
         };
 

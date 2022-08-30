@@ -9,6 +9,7 @@ using System.ComponentModel;
 using CountingGUI.Controls;
 using System.Windows.Controls;
 using System;
+using Microsoft.Win32;
 
 namespace CountingGUI.Windows
 {
@@ -41,7 +42,8 @@ namespace CountingGUI.Windows
                 Dispatcher.Invoke(() => Pause.IsEnabled = false);
                 Dispatcher.Invoke(() => SelectWorkspace.IsEnabled = true);
                 Dispatcher.Invoke(() => Pause.Header = "Приостановить");
-                Dispatcher.Invoke(() => Start.Header = "Обработка");
+                if (Dispatcher.Invoke(() => Start.Header.ToString() != "Обработка"))
+                    Dispatcher.Invoke(() => Start.Header = "Обработано");
             }
         }
         private void Sort()
@@ -141,7 +143,7 @@ namespace CountingGUI.Windows
         {
             new Help() { Owner = this }.ShowDialog();
         }
-        private void SelectWorkspace_Click(object sender, RoutedEventArgs e)
+        private void SelecFoldersWorkspace_Click(object sender, RoutedEventArgs e)
         {
             if (Workspace.WorkspaceInstance.IsRunning)
                 return;
@@ -169,14 +171,45 @@ namespace CountingGUI.Windows
                     SystemInfoControl.DataContext = Workspace.WorkspaceInstance;
                     if (Workspace.WorkspaceInstance.Settings.GetProcessingType() == ProcessingType.OneSymbol)
                         OneSymbolControl.GenerateGrids();
+                    if (!Start.IsEnabled)
+                        Start.IsEnabled = true;
+                    Dispatcher.Invoke(() => Start.Header = "Обработка");
                 }
             }
-            catch (Exception)
-            {
-
-            }
+            catch (Exception) { }
         }
+        private void SelecFilesWorkspace_Click(object sender, RoutedEventArgs e)
+        {
+            if (Workspace.WorkspaceInstance.IsRunning)
+                return;
+            string filter = string.Join(";*", new string[] { "*.txt", ".doc", ".docx", ".docs", ".rtf", ".ibooks", ".odt", ".wps", ".wpd", ".pages", ".tex", ".htm", ".html", ".xhtml", ".cfm", ".jsp", ".php" });
+            try
+            {
+                OpenFileDialog openFileDialog = new()
+                {
+                    CheckFileExists = true,
+                    CheckPathExists = true,
+                    Multiselect = true,
+                    Title = "Массив данных",
+                    Filter = $"{filter}|{filter}"
+                };
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    Sort oldSort = Workspace.WorkspaceInstance.Sort;
 
+                    Workspace.WorkspaceInstance = new(openFileDialog.FileNames, Workspace.WorkspaceInstance.Settings);
+                    DataContext = Workspace.WorkspaceInstance;
+                    Workspace.WorkspaceInstance.SortBy(oldSort);
+                    SystemInfoControl.DataContext = Workspace.WorkspaceInstance;
+                    if (Workspace.WorkspaceInstance.Settings.GetProcessingType() == ProcessingType.OneSymbol)
+                        OneSymbolControl.GenerateGrids();
+                    if (!Start.IsEnabled)
+                        Start.IsEnabled = true;
+                    Dispatcher.Invoke(() => Start.Header = "Обработка");
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+        }
         #endregion
 
         #region Settings

@@ -8,7 +8,7 @@
         FontSize="{Binding Settings.FontSize}"
         FontFamily="{Binding Settings.FontFamily}"
         Closing="Window_Closing"
-        Title="Программа подсчета знаков" Height="800" Width="700" MinHeight="800" MinWidth="700">
+        Title="Программа подсчета знаков" Height="800" Width="520" MinHeight="800" MinWidth="520">
     <Border BorderBrush="Black" BorderThickness="2">
         <Grid x:Name="BackgroundGrid" Background="{Binding Settings.SolidColorBrush}">
             <Border BorderBrush="Black" BorderThickness="2" Margin="20">
@@ -19,8 +19,11 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Menu Grid.Row="0" VerticalAlignment="Top">
-                        <MenuItem x:Name="SelectWorkspace" Header="Массив данных" Click="SelectWorkspace_Click"/>
-                        <MenuItem x:Name="Start" Header="Обработка" Click="Start_Click"/>
+                        <MenuItem x:Name="SelectWorkspace" Header="Данные">
+                            <MenuItem x:Name="SelecFoldersWorkspace" Header="Папка" Click="SelecFoldersWorkspace_Click"/>
+                            <MenuItem x:Name="SelecFilesWorkspace" Header="Файлы" Click="SelecFilesWorkspace_Click"/>
+                        </MenuItem>
+                        <MenuItem x:Name="Start" Header="Обработка" Click="Start_Click" IsEnabled="False"/>
                         <MenuItem x:Name="Pause" Header="Приостановить" Click="Pause_Click" IsEnabled="False"/>
                         <MenuItem Header="Сортировка">
                             <MenuItem x:Name="DefaultMenuItem" Header="По умолчанию" IsChecked="True" Click="DefaultMenuItem_Click" StaysOpenOnClick="True"/>
