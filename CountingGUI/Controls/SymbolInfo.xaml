@@ -19,7 +19,7 @@
                 <TextBlock x:Name="Count" Text="{Binding Path=Count}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
             </Border>
             <Border BorderBrush="Black" BorderThickness="0,0,1,0" Grid.Column="2">
-                <TextBlock x:Name="Percent" Text="{Binding Path=Percent}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
+                <TextBlock x:Name="Percent" Text="{Binding Path=PercentView}" TextAlignment="Center" VerticalAlignment="Center" Margin="2"/>
             </Border>
         </Grid>
     </Border>

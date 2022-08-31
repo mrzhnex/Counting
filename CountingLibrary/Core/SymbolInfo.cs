@@ -7,7 +7,6 @@ namespace CountingLibrary.Core
     {
         public string Symbol { get; private set; }
         public string SymbolView { get; private set; }
-        private int count;
         public int Count
         {
             get { return count; }
@@ -21,7 +20,7 @@ namespace CountingLibrary.Core
                 }
             }
         }
-        private double percent;
+        private int count;
         public double Percent
         {
             get { return percent; }
@@ -29,8 +28,20 @@ namespace CountingLibrary.Core
             {
                 percent = value;
                 OnPropertyChanged();
+                PercentView = percent.ToString("0.00");
             }
         }
+        private double percent;
+        public string PercentView
+        {
+            get { return percentView; }
+            set
+            {
+                percentView = value;
+                OnPropertyChanged();
+            }
+        }
+        private string percentView = "0.00";
 
         public SymbolInfo(string symbol)
         {

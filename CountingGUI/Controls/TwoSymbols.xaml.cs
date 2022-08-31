@@ -16,13 +16,16 @@ namespace CountingGUI.Controls
             switch (sort)
             {
                 case Sort.Alphabet:
+                    Dispatcher.Invoke(() => SymbolInfosList.Items.SortDescriptions.Clear());
                     Dispatcher.Invoke(() => SymbolInfosList.Items.SortDescriptions.Add(new SortDescription("Symbol", ListSortDirection.Ascending)));
                     break;
                 case Sort.Count:
+                    Dispatcher.Invoke(() => SymbolInfosList.Items.SortDescriptions.Clear());
                     Dispatcher.Invoke(() => SymbolInfosList.Items.SortDescriptions.Add(new SortDescription("Count", ListSortDirection.Descending)));
                     break;
                 case Sort.Default:
-
+                    Dispatcher.Invoke(() => SymbolInfosList.Items.SortDescriptions.Clear());
+                    Dispatcher.Invoke(() => SymbolInfosList.Items.SortDescriptions.Add(new SortDescription("Symbol", ListSortDirection.Ascending)));
                     break;
             }
         }

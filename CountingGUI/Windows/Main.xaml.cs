@@ -10,6 +10,7 @@ using CountingGUI.Controls;
 using System.Windows.Controls;
 using System;
 using Microsoft.Win32;
+using System.Windows.Data;
 
 namespace CountingGUI.Windows
 {
@@ -105,6 +106,7 @@ namespace CountingGUI.Windows
                         MainGrid.Children.Remove(TwoSymbolsControl);
                     break;
             }
+            Dispatcher.Invoke(() => Start.Header = "Обработка");
         }
         #endregion
 
@@ -151,7 +153,7 @@ namespace CountingGUI.Windows
             {
                 CommonFileDialog commonFileDialog = new CommonOpenFileDialog
                 {
-                    Title = "Массив данных",
+                    Title = "Выбор данных",
                     IsFolderPicker = true,
                     AddToMostRecentlyUsedList = false,
                     AllowNonFileSystemItems = false,
@@ -174,6 +176,12 @@ namespace CountingGUI.Windows
                     if (!Start.IsEnabled)
                         Start.IsEnabled = true;
                     Dispatcher.Invoke(() => Start.Header = "Обработка");
+                    Binding binding = new()
+                    {
+                        Path = new PropertyPath("Settings.SolidColorBrush")
+                    };
+                    Dispatcher.Invoke(() => BindingOperations.ClearBinding(SelectWorkspace, BackgroundProperty));
+                    Dispatcher.Invoke(() => SelectWorkspace.SetBinding(BackgroundProperty, binding));
                 }
             }
             catch (Exception) { }
@@ -190,7 +198,7 @@ namespace CountingGUI.Windows
                     CheckFileExists = true,
                     CheckPathExists = true,
                     Multiselect = true,
-                    Title = "Массив данных",
+                    Title = "Выбор данных",
                     Filter = $"{filter}|{filter}"
                 };
                 if (openFileDialog.ShowDialog() == true)
@@ -206,9 +214,15 @@ namespace CountingGUI.Windows
                     if (!Start.IsEnabled)
                         Start.IsEnabled = true;
                     Dispatcher.Invoke(() => Start.Header = "Обработка");
+                    Binding binding = new()
+                    {
+                        Path = new PropertyPath("Settings.SolidColorBrush")
+                    };
+                    Dispatcher.Invoke(() => BindingOperations.ClearBinding(SelectWorkspace, BackgroundProperty));
+                    Dispatcher.Invoke(() => SelectWorkspace.SetBinding(BackgroundProperty, binding));
                 }
             }
-            catch (Exception ex) { throw new Exception(ex.Message); }
+            catch (Exception) { }
         }
         #endregion
 

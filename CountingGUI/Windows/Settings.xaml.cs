@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using CountingLibrary.Core;
-using Microsoft.WindowsAPICodePack.Dialogs;
+using Microsoft.Win32;
 
 namespace CountingGUI.Windows
 {
@@ -104,28 +104,18 @@ namespace CountingGUI.Windows
         {
             try
             {
-                CommonFileDialog commonFileDialog = new CommonOpenFileDialog
+                SaveFileDialog saveFileDialog = new()
                 {
                     Title = "Сохранить результат в PDF",
-                    IsFolderPicker = false,
-                    AddToMostRecentlyUsedList = false,
-                    AllowNonFileSystemItems = false,
-                    EnsureFileExists = false,
-                    EnsurePathExists = true,
-                    EnsureReadOnly = false,
-                    EnsureValidNames = true,
-                    Multiselect = false,
-                    ShowPlacesList = true
+                    Filter = "*.pdf|*.pdf",
+                    CheckPathExists = true
                 };
-                if (commonFileDialog.ShowDialog() == CommonFileDialogResult.Ok)
+                if (saveFileDialog.ShowDialog() == true)
                 {
-                    Workspace.WorkspaceInstance.Save(commonFileDialog.FileName + ".pdf");
+                    Workspace.WorkspaceInstance.Save(saveFileDialog.FileName);
                 }
             }
-            catch (Exception)
-            {
-
-            }
+            catch (Exception) { }
         }
     }
 }
