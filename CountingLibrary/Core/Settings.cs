@@ -73,7 +73,7 @@ namespace CountingLibrary.Core
         {
             { "Серый", new SolidColorBrush(Colors.DarkGray) },
             { "Синий", new SolidColorBrush(Colors.RoyalBlue) },
-            { "Зелено-голубой", new SolidColorBrush(Colors.CadetBlue)},
+            { "Зелено-синий", new SolidColorBrush(Colors.CadetBlue)},
             { "Розовый", new SolidColorBrush(Colors.Pink) }
         };
 
@@ -92,6 +92,7 @@ namespace CountingLibrary.Core
         {
             { "Знак", Core.ProcessingType.OneSymbol },
             { "Два знака", Core.ProcessingType.TwoSymbols },
+            { "Три знака", Core.ProcessingType.ThreeSymbols },
             { "Слово", Core.ProcessingType.Word }
         };
 
@@ -119,6 +120,6 @@ namespace CountingLibrary.Core
     }
     public enum ProcessingType
     {
-        OneSymbol, TwoSymbols, Word
+        OneSymbol, TwoSymbols, ThreeSymbols, Word
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using System.Xml.Serialization;
 using CountingLibrary.Main;
 using PdfSharp.Drawing;
@@ -41,7 +42,13 @@ namespace CountingLibrary.Core
                 case ProcessingType.TwoSymbols:
                     xGraphics.DrawString($"Обработанных пар знаков {Workspace.WorkspaceInstance.SymbolsCount}", xFont, XBrushes.Black, new XPoint(100, 50));
                     xGraphics.DrawString($"Необработанных пар знаков {Workspace.WorkspaceInstance.WrongSymbolsCount}", xFont, XBrushes.Black, new XPoint(100, 75));
-                    xGraphics.DrawString("Пара", xFont, XBrushes.Black, new XPoint(100, 150));
+                    xGraphics.DrawString("Два знака", xFont, XBrushes.Black, new XPoint(100, 150));
+                    xGraphics.DrawString("Процент", xFont, XBrushes.Black, new XPoint(400, 150));
+                    break;
+                case ProcessingType.ThreeSymbols:
+                    xGraphics.DrawString($"Обработанных троек {Workspace.WorkspaceInstance.SymbolsCount}", xFont, XBrushes.Black, new XPoint(100, 50));
+                    xGraphics.DrawString($"Необработанных троек {Workspace.WorkspaceInstance.WrongSymbolsCount}", xFont, XBrushes.Black, new XPoint(100, 75));
+                    xGraphics.DrawString("Три знака", xFont, XBrushes.Black, new XPoint(100, 150));
                     xGraphics.DrawString("Процент", xFont, XBrushes.Black, new XPoint(400, 150));
                     break;
                 case ProcessingType.Word:
@@ -67,7 +74,7 @@ namespace CountingLibrary.Core
 
                     xGraphics.DrawString(Workspace.WorkspaceInstance.SymbolInfos[i].SymbolView, xFont, XBrushes.Black, new XPoint(100, height + 20));
                     xGraphics.DrawString(Workspace.WorkspaceInstance.SymbolInfos[i].Count.ToString(), xFont, XBrushes.Black, new XPoint(250, height + 20));
-                    xGraphics.DrawString(Workspace.WorkspaceInstance.SymbolInfos[i].Percent.ToString(), xFont, XBrushes.Black, new XPoint(400, height + 20));
+                    xGraphics.DrawString(Workspace.WorkspaceInstance.SymbolInfos[i].PercentView, xFont, XBrushes.Black, new XPoint(400, height + 20));
                     height += 20;
                     if (height + 50 > pdfPage.Height)
                     {

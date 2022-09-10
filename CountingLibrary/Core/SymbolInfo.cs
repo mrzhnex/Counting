@@ -46,11 +46,14 @@ namespace CountingLibrary.Core
         public SymbolInfo(string symbol)
         {
             Symbol = symbol;
-            SymbolView = symbol.ToString();
-            if (symbol == "\n")
+            if (symbol == "\r")
                 SymbolView = "enter";
             else if (symbol == " ")
                 SymbolView = "пробел";
+            else
+            {
+                SymbolView = symbol.Replace("\r", "|enter|").Replace(" ", "|пробел|");
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

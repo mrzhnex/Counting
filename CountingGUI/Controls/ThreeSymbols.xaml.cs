@@ -4,9 +4,9 @@ using CountingLibrary.Main;
 
 namespace CountingGUI.Controls
 {
-    public partial class TwoSymbols : UserControl
+    public partial class ThreeSymbols : UserControl
     {
-        public TwoSymbols()
+        public ThreeSymbols()
         {
             InitializeComponent();
         }

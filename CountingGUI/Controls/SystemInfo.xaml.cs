@@ -26,6 +26,10 @@ namespace CountingGUI.Controls
                     ProcessedSymbolsCount.Text = "Обработанных пар знаков";
                     WrongSymbolsCount.Text = "Необработанных пар знаков";
                     break;
+                case ProcessingType.ThreeSymbols:
+                    ProcessedSymbolsCount.Text = "Обработанных троек";
+                    WrongSymbolsCount.Text = "Необработанных троек";
+                    break;
                 case ProcessingType.Word:
                     ProcessedSymbolsCount.Text = "Обработанных слов";
                     WrongSymbolsCount.Text = "Необработанных знаков";

@@ -3,7 +3,7 @@
     internal class Info
     {
         internal char[] Numbers { get; private set; } = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
-        internal char[] Symbols { get; private set; } = new char[] { ' ', '\n', '@', '-', '+', '=', '.', ',', ';', ':', '"', '!', '?', '%', '№', '#', '~', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\' };
+        internal char[] Symbols { get; private set; } = new char[] { ' ', '\r', '@', '-', '+', '=', '.', ',', ';', ':', '"', '!', '?', '%', '№', '#', '~', '*', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\' };
         internal Alphabet Alphabet { get; private set; } = Alphabet.Ru;
         internal string[] FileExtensions { get; private set; } = new string[] { ".txt", ".doc", ".docx", ".docs", ".rtf", ".ibooks", ".odt", ".wps", ".wpd", ".pages", ".tex", ".htm", ".html", ".xhtml", ".cfm", ".jsp", ".php" };
         internal string InitialTime { get; private set; } = "00:00:00:00";

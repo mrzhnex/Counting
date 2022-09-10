@@ -1,11 +1,11 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using CountingLibrary.Events;
 using CountingLibrary.Handlers;
 using CountingLibrary.Main;
-using DocumentFormat.OpenXml.Packaging;
 using Microsoft.Office.Interop.Word;
 
 namespace CountingLibrary.Core
@@ -15,12 +15,20 @@ namespace CountingLibrary.Core
         private HardDriveManager HardDriveManager { get; set; }
         public Settings Settings { get; private set; } = new();
         internal Dictionary<string, List<string>> FileInfos { get; private set; } = new();
-        public ObservableCollection<SymbolInfo> SymbolInfos { get; private set; } = new();
+        public ObservableCollection<SymbolInfo> SymbolInfos
+        {
+            get { return symbolInfos; }
+            private set
+            {
+                symbolInfos = value;
+                OnPropertyChanged();
+            }
+        }
+        private ObservableCollection<SymbolInfo> symbolInfos = new();
         public List<string> SymbolsOne { get; private set; } = new();
         public List<string> SymbolsTwo { get; private set; } = new();
+        public List<string> SymbolsThree { get; private set; } = new();
         private Stopwatch Stopwatch { get; set; } = new();
-
-        private string timeSpent = Info.Default.InitialTime;
         public string TimeSpent
         {
             get { return timeSpent; }
@@ -30,7 +38,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-        private string timeLeft = Info.Default.InitialTime;
+        private string timeSpent = Info.Default.InitialTime;
         public string TimeLeft
         {
             get { return timeLeft; }
@@ -40,7 +48,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-        private ulong symbolsCount;
+        private string timeLeft = Info.Default.InitialTime;
         public ulong SymbolsCount
         {
             get { return symbolsCount; }
@@ -50,7 +58,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-        private ulong wrongSymbolsCount;
+        private ulong symbolsCount;
         public ulong WrongSymbolsCount
         {
             get { return wrongSymbolsCount; }
@@ -60,7 +68,7 @@ namespace CountingLibrary.Core
                 OnPropertyChanged();
             }
         }
-
+        private ulong wrongSymbolsCount;
         public ManualResetEvent ManualResetEvent { get; private set; } = new(false);
         public bool IsRunning { get; private set; } = false;
         public static Workspace WorkspaceInstance { get; set; } = new();
@@ -115,6 +123,7 @@ namespace CountingLibrary.Core
             {
                 case ProcessingType.OneSymbol:
                 case ProcessingType.TwoSymbols:
+                case ProcessingType.ThreeSymbols:
                     switch (Sort)
                     {
                         case Sort.Alphabet:
@@ -148,33 +157,18 @@ namespace CountingLibrary.Core
             {
                 try
                 {
-                    if (IsMicrosoftOfficeNormalFile(fullFileName))
+                    if (IsMicrosoftOfficeFile(fullFileName))
                     {
-                        WordprocessingDocument wordprocessingDocument = WordprocessingDocument.Open(fullFileName, false);
-                        FileInfos.Add(fullFileName, new List<string>() { wordprocessingDocument.MainDocumentPart.Document.Body.InnerText });
-                        if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
-                        {
-                            SymbolsCount += (ulong)wordprocessingDocument.MainDocumentPart.Document.Body.ChildElements.Count;
-                            SymbolInfos.First(x => x.Symbol == "\n").AddCount(wordprocessingDocument.MainDocumentPart.Document.Body.ChildElements.Count);
-                        }
-                    }
-                    else if (IsMicrosoftOfficeFile(fullFileName))
-                    {
-                        Document document = new Application().Documents.Open(fullFileName, ReadOnly: true);
+                        Application application = new();
+                        Document document = application.Documents.Open(fullFileName, ReadOnly: true);
                         FileInfos.Add(fullFileName, new List<string>() { document.Content.Text });
-                        if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
-                        {
-                            SymbolsCount += (ulong)document.Content.Paragraphs.Count;
-                            SymbolInfos.First(x => x.Symbol == "\n").AddCount(document.Content.Paragraphs.Count - 1 < 0 ? 0 : document.Content.Paragraphs.Count - 1);
-                        }
+                        document.Close();
+                        application.Quit();
                     }
                     else
                         FileInfos.Add(fullFileName, File.ReadAllLines(fullFileName).ToList());
                 }
-                catch (IOException)
-                {
-                    //log
-                }
+                catch (IOException) { }
             }
             foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
             {
@@ -186,9 +180,10 @@ namespace CountingLibrary.Core
         }
         private void Scan()
         {
-            double seconds = 0;
             string word = string.Empty;
-            char oldC = '\n';
+            new Thread(UpdatePercents).Start();
+            new Thread(UpdateTime).Start();
+            new Thread(UpdateSort).Start();
             foreach (KeyValuePair<string, List<string>> keyValuePair in FileInfos)
             {
                 if (!IsRunning)
@@ -203,33 +198,16 @@ namespace CountingLibrary.Core
                             foreach (char c in keyValuePair.Value[i])
                             {
                                 ManualResetEvent.WaitOne();
-
                                 if (!IsRunning)
                                     break;
                                 if (SymbolInfos.Any(x => x.Symbol == c.ToString().ToLower()))
                                 {
                                     SymbolsCount++;
                                     SymbolInfos.First(x => x.Symbol == c.ToString().ToLower()).AddCount();
-                                    if (Settings.UpdateInRealTime)
-                                    {
-                                        foreach (SymbolInfo symbolInfo in SymbolInfos)
-                                        {
-                                            symbolInfo.UpdatePercent();
-                                        }
-                                    }
                                 }
                                 else
                                 {
                                     WrongSymbolsCount++;
-                                }
-
-                                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
-                                if (!TimeLeftIsOver)
-                                    TimeLeft = CalculateTimeLeft();
-                                if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
-                                {
-                                    seconds = Stopwatch.Elapsed.TotalSeconds + 0.5d;
-                                    SortBy(Sort);
                                 }
                             }
                             break;
@@ -237,35 +215,46 @@ namespace CountingLibrary.Core
                             foreach (char c in keyValuePair.Value[i])
                             {
                                 ManualResetEvent.WaitOne();
-
                                 if (!IsRunning)
                                     break;
-                                word = string.Concat(oldC, c).ToLower();
-                                
+                                word = string.Concat(word, c).ToLower();
+                                if (word.Length > 2)
+                                    word = word.Remove(0, 1);
                                 if (SymbolInfos.Any(x => x.Symbol == word))
                                 {
                                     SymbolsCount++;
                                     SymbolInfos.First(x => x.Symbol == word).AddCount();
-                                    if (Settings.UpdateInRealTime)
-                                    {
-                                        foreach (SymbolInfo symbolInfo in SymbolInfos)
-                                        {
-                                            symbolInfo.UpdatePercent();
-                                        }
-                                    }
                                 }
                                 else
                                 {
                                     WrongSymbolsCount++;
                                 }
-                                oldC = c;
-                                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
-                                if (!TimeLeftIsOver)
-                                    TimeLeft = CalculateTimeLeft();
-                                if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
+                            }
+                            break;
+                        case ProcessingType.ThreeSymbols:
+                            foreach (char c in keyValuePair.Value[i])
+                            {
+                                ManualResetEvent.WaitOne();
+                                if (!IsRunning)
+                                    break;
+                                word = string.Concat(word, c).ToLower();
+                                if (word.Length > 3)
+                                    word = word.Remove(0, 1);
+                                if (SymbolInfos.Any(x => x.Symbol == word))
                                 {
-                                    seconds = Stopwatch.Elapsed.TotalSeconds + 2.5d;
-                                    SortBy(Sort);
+                                    SymbolsCount++;
+                                    SymbolInfos.First(x => x.Symbol == word).AddCount();
+                                }
+                                else if (SymbolsThree.Contains(word))
+                                {
+                                    SymbolsCount++;
+                                    SymbolInfo newSymbolInfo = new(word);
+                                    newSymbolInfo.AddCount();
+                                    System.Windows.Application.Current.Dispatcher.Invoke(() => SymbolInfos.Add(newSymbolInfo));
+                                }
+                                else
+                                {
+                                    WrongSymbolsCount++;
                                 }
                             }
                             break;
@@ -273,13 +262,11 @@ namespace CountingLibrary.Core
                             foreach (char c in keyValuePair.Value[i])
                             {
                                 ManualResetEvent.WaitOne();
-
                                 if (!IsRunning)
                                     break;
                                 word = string.Concat(word, c).ToLower();
                                 if (word.Length > SymbolInfo.Symbol.Length)
                                     word = word.Remove(0, 1);
-
                                 if (SymbolInfo.Symbol == word)
                                 {
                                     SymbolsCount++;
@@ -289,22 +276,28 @@ namespace CountingLibrary.Core
                                 {
                                     WrongSymbolsCount++;
                                 }
-
-
-
-                                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
-                                if (!TimeLeftIsOver)
-                                    TimeLeft = CalculateTimeLeft();
                             }
                             break;
                     }
-                    
+
                     if (Settings.GetProcessingType() == ProcessingType.OneSymbol)
                     {
                         if (i != keyValuePair.Value.Count - 1)
                         {
                             SymbolsCount++;
-                            SymbolInfos.First(x => x.Symbol == "\n").AddCount();
+                            SymbolInfos.First(x => x.Symbol == "\r").AddCount();
+                        }
+                    }
+                    else
+                    {
+                        word = string.Concat(word, "\r").ToLower();
+                        if (Settings.GetProcessingType() == ProcessingType.TwoSymbols && word.Length > 2)
+                        {
+                            word = word.Remove(0, 1);
+                        }
+                        else if (Settings.GetProcessingType() == ProcessingType.ThreeSymbols && word.Length > 3)
+                        {
+                            word = word.Remove(0, 1);
                         }
                     }
                 }
@@ -321,11 +314,11 @@ namespace CountingLibrary.Core
             if (!IsRunning)
             {
                 TimeSpent = Info.Default.InitialTime;
-                TimeLeft = Info.Default.InitialTime;
                 TimeLeftIsOver = false;
                 ResetOldData();
             }
             IsRunning = false;
+            TimeLeft = Info.Default.InitialTime;
         }
         public void PrepareScan()
         {
@@ -333,7 +326,7 @@ namespace CountingLibrary.Core
                 FastScan();
         }
         #endregion
-        
+
         #region Start and Stop
         public void Start()
         {
@@ -425,7 +418,7 @@ namespace CountingLibrary.Core
             {
                 symbols.Add(Info.Default.Alphabet.Letters[i].ToString());
             }
-            for (int i = 2; i < 9; i++)
+            for (int i = 0; i < 9; i++)
             {
                 symbols.Add(Info.Default.Symbols[i].ToString());
             }
@@ -434,9 +427,12 @@ namespace CountingLibrary.Core
                 foreach (string s2 in symbols)
                 {
                     SymbolsTwo.Add(s + s2);
+                    foreach (string s3 in symbols)
+                    {
+                        SymbolsThree.Add(s + s2 + s3);
+                    }
                 }
             }
-            
             SymbolInfo = new(Settings.Word);
         }
         private void PrepareSymbolInfos()
@@ -455,6 +451,8 @@ namespace CountingLibrary.Core
                         SymbolInfos.Add(new(SymbolsTwo[i]));
                     }
                     break;
+                case ProcessingType.ThreeSymbols:
+                    break;
                 case ProcessingType.Word:
                     SymbolInfo = new(Settings.Word);
                     break;
@@ -468,6 +466,7 @@ namespace CountingLibrary.Core
             switch (Settings.GetProcessingType())
             {
                 case ProcessingType.TwoSymbols:
+                case ProcessingType.ThreeSymbols:
                     processedSymbolsCount = (SymbolsCount * 2) + WrongSymbolsCount;
                     break;
             }
@@ -481,9 +480,60 @@ namespace CountingLibrary.Core
             }
             return Info.Default.InitialTime;
         }
+        private void UpdatePercents()
+        {
+            while (IsRunning)
+            {
+                ManualResetEvent.WaitOne();
+                if (Settings.UpdateInRealTime)
+                {
+                    try
+                    {
+                        foreach (SymbolInfo symbolInfo in SymbolInfos)
+                        {
+                            symbolInfo.UpdatePercent();
+                        }
+                    }
+                    catch (InvalidOperationException) { }
+                }
+                Thread.Sleep(300);
+            }
+        }
+        private void UpdateTime()
+        {
+            while (IsRunning)
+            {
+                Thread.Sleep(100);
+                TimeSpent = Stopwatch.Elapsed.ToString(Info.Default.TimeParseString);
+                if (!TimeLeftIsOver)
+                    TimeLeft = CalculateTimeLeft();
+            }
+        }
+        private void UpdateSort()
+        {
+            double seconds = 0;
+            double delay = 0.5d;
+            switch (Settings.GetProcessingType())
+            {
+                case ProcessingType.TwoSymbols:
+                case ProcessingType.ThreeSymbols:
+                    delay = 2.5d;
+                    break;
+                case ProcessingType.Word:
+                    return;
+            }
+            while (IsRunning)
+            {
+                if (Settings.UpdateInRealTime && Stopwatch.Elapsed.TotalSeconds > seconds)
+                {
+                    seconds = Stopwatch.Elapsed.TotalSeconds + delay;
+                    SortBy(Sort);
+                }
+            }
+        }
         private bool IsMicrosoftOfficeFile(string fileName)
         {
-            return new string[] { ".doc", ".docs", ".odt", ".rtf" }.Contains(Path.GetExtension(fileName).ToLower());
+            return new string[] { ".docx", ".doc", ".docs", ".odt", ".rtf" }.Contains(Path.GetExtension(fileName).ToLower());
         }
         private bool IsMicrosoftOfficeNormalFile(string fileName)
         {

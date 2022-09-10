@@ -19,6 +19,7 @@ namespace CountingGUI.Windows
         private bool IsWindowClosing { get; set; }
         private OneSymbol OneSymbolControl { get; set; } = new();
         private TwoSymbols TwoSymbolsControl { get; set; } = new();
+        private ThreeSymbols ThreeSymbolsControl { get; set; } = new();
         private Word WordControl { get; set; } = new();
 
         public Main()
@@ -27,6 +28,7 @@ namespace CountingGUI.Windows
             DataContext = Workspace.WorkspaceInstance;
             Grid.SetRow(OneSymbolControl, 2);
             Grid.SetRow(TwoSymbolsControl, 2);
+            Grid.SetRow(ThreeSymbolsControl, 2);
             Grid.SetRow(WordControl, 2);
             Action.Main.Manage.ManageInstance.RegisterAllEvents(this);
             Action.Main.Manage.ManageInstance.ExecuteEvent<IEventHandlerChangeProcessingType>(new ChangeProcessingTypeEvent(Workspace.WorkspaceInstance.Settings.GetProcessingType()));
@@ -74,6 +76,9 @@ namespace CountingGUI.Windows
                 case ProcessingType.TwoSymbols:
                     TwoSymbolsControl.SortList(sortEvent.Sort);
                     break;
+                case ProcessingType.ThreeSymbols:
+                    ThreeSymbolsControl.SortList(sortEvent.Sort);
+                    break;
                 case ProcessingType.Word:
                     break;
             }
@@ -86,6 +91,8 @@ namespace CountingGUI.Windows
                     MainGrid.Children.Add(OneSymbolControl);
                     if (MainGrid.Children.Contains(TwoSymbolsControl))
                         MainGrid.Children.Remove(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(ThreeSymbolsControl))
+                        MainGrid.Children.Remove(ThreeSymbolsControl);
                     if (MainGrid.Children.Contains(WordControl))
                         MainGrid.Children.Remove(WordControl);
                     OneSymbolControl.GenerateGrids();
@@ -94,9 +101,21 @@ namespace CountingGUI.Windows
                     MainGrid.Children.Add(TwoSymbolsControl);
                     if (MainGrid.Children.Contains(OneSymbolControl))
                         MainGrid.Children.Remove(OneSymbolControl);
+                    if (MainGrid.Children.Contains(ThreeSymbolsControl))
+                        MainGrid.Children.Remove(ThreeSymbolsControl);
                     if (MainGrid.Children.Contains(WordControl))
                         MainGrid.Children.Remove(WordControl);
-                    TwoSymbolsControl.ChangeSymboMainlInfoSymbolText("Пара");
+                    TwoSymbolsControl.ChangeSymboMainlInfoSymbolText("Два знака");
+                    break;
+                case ProcessingType.ThreeSymbols:
+                    MainGrid.Children.Add(ThreeSymbolsControl);
+                    if (MainGrid.Children.Contains(OneSymbolControl))
+                        MainGrid.Children.Remove(OneSymbolControl);
+                    if (MainGrid.Children.Contains(TwoSymbolsControl))
+                        MainGrid.Children.Remove(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(WordControl))
+                        MainGrid.Children.Remove(WordControl);
+                    ThreeSymbolsControl.ChangeSymboMainlInfoSymbolText("Три знака");
                     break;
                 case ProcessingType.Word:
                     MainGrid.Children.Add(WordControl);
@@ -104,6 +123,8 @@ namespace CountingGUI.Windows
                         MainGrid.Children.Remove(OneSymbolControl);
                     if (MainGrid.Children.Contains(TwoSymbolsControl))
                         MainGrid.Children.Remove(TwoSymbolsControl);
+                    if (MainGrid.Children.Contains(ThreeSymbolsControl))
+                        MainGrid.Children.Remove(ThreeSymbolsControl);
                     break;
             }
             Dispatcher.Invoke(() => Start.Header = "Обработка");
